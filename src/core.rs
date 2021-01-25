@@ -61,12 +61,21 @@ impl Kaon {
             }
         }
     }
+
+    async fn process() {
+        unimplemented!()
+    }
+
     pub async fn charge() -> Kaon {
         Self::retrieve_environment().await;
 
         Kaon {
             environment: std::env::vars_os(),
         }
+    }
+
+    pub async fn decay() {
+        Self::process().await;
     }
 }
 
