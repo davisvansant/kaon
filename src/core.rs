@@ -2,12 +2,12 @@ use std::ffi::OsString;
 use tracing::{info, instrument};
 
 pub struct Kaon {
-    pub settings: std::env::VarsOs,
+    pub environment: std::env::VarsOs,
 }
 
 impl Kaon {
     #[instrument]
-    async fn retrieve_settings() {
+    async fn retrieve_environment() {
         info!("| kaon environment | Checking environment variables");
         let handler = OsString::from("_HANDLER");
         let x_amzn_trace_id = OsString::from("_X_AMZN_TRACE_ID");
@@ -62,10 +62,10 @@ impl Kaon {
         }
     }
     pub async fn charge() -> Kaon {
-        Self::retrieve_settings().await;
+        Self::retrieve_environment().await;
 
         Kaon {
-            settings: std::env::vars_os(),
+            environment: std::env::vars_os(),
         }
     }
 }
@@ -172,7 +172,7 @@ mod tests {
         let test_tz = OsString::from("TZ");
         std::env::set_var(&test_tz, OsString::from("test_tz"));
 
-        Kaon::retrieve_settings().await;
+        Kaon::retrieve_environment().await;
 
         let test_environment_variables = vec![
             test_handler,
@@ -202,7 +202,7 @@ mod tests {
     #[tokio::test]
     async fn charge() {
         let kaon = Kaon::charge().await;
-        for (k, v) in kaon.settings {
+        for (k, v) in kaon.environment {
             assert_eq!(std::env::var_os(k), Some(v));
         }
     }
