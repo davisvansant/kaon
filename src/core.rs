@@ -12,7 +12,7 @@ impl Kaon {
         let handler = OsString::from("_HANDLER");
         let x_amzn_trace_id = OsString::from("_X_AMZN_TRACE_ID");
         let aws_region = OsString::from("AWS_REGION");
-        let aws_execution_env = OsString::from("AWS_EXECUTION_EN");
+        let aws_execution_env = OsString::from("AWS_EXECUTION_ENV");
         let aws_lambda_function_name = OsString::from("AWS_LAMBDA_FUNCTION_NAME");
         let aws_lambda_function_memory_size = OsString::from("AWS_LAMBDA_FUNCTION_MEMORY_SIZE");
         let aws_lambda_function_version = OsString::from("AWS_LAMBDA_FUNCTION_VERSION");
