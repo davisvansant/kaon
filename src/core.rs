@@ -7,11 +7,12 @@ use tracing::{info, instrument};
 pub struct Kaon {
     pub environment: std::env::VarsOs,
     pub client: Client<HttpConnector, Body>,
+    pub runtime_api: Option<OsString>,
 }
 
 impl Kaon {
     #[instrument]
-    async fn retrieve_environment() {
+    async fn retrieve_environment() -> Option<OsString> {
         info!("| kaon environment | Checking environment variables");
         let handler = OsString::from("_HANDLER");
         let x_amzn_trace_id = OsString::from("_X_AMZN_TRACE_ID");
@@ -42,7 +43,7 @@ impl Kaon {
             aws_lambda_initialization_type,
             aws_lambda_log_group_name,
             aws_lambda_log_stream_name,
-            aws_lambda_runtime_api,
+            aws_lambda_runtime_api.clone(),
             lambda_task_root,
             lamda_runtime_dir,
             tz,
@@ -64,6 +65,8 @@ impl Kaon {
                 None => info!("| kaon environment | {:#?} is not set", var),
             }
         }
+
+        Some(aws_lambda_runtime_api)
     }
 
     async fn process() {
@@ -71,11 +74,12 @@ impl Kaon {
     }
 
     pub async fn charge() -> Kaon {
-        Self::retrieve_environment().await;
+        // Self::retrieve_environment().await;
 
         Kaon {
             environment: std::env::vars_os(),
             client: Client::new(),
+            runtime_api: Self::retrieve_environment().await,
         }
     }
 
@@ -215,9 +219,11 @@ mod tests {
 
     #[tokio::test]
     async fn charge() {
+        std::env::set_var("AWS_LAMBDA_RUNTIME_API", "test_aws_lambda_runtime_api");
         let kaon = Kaon::charge().await;
         for (k, v) in kaon.environment {
             assert_eq!(std::env::var_os(k), Some(v));
         }
+        assert_eq!(kaon.runtime_api.is_some(), true);
     }
 }
