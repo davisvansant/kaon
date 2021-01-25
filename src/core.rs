@@ -38,19 +38,26 @@ impl Kaon {
             aws_lambda_initialization_type,
             aws_lambda_log_group_name,
             aws_lambda_log_stream_name,
-            aws_access_key_id,
-            aws_secret_access_key,
-            aws_session_token,
             aws_lambda_runtime_api,
             lambda_task_root,
             lamda_runtime_dir,
             tz,
         ];
 
+        let sensitive_environment_variables =
+            vec![aws_access_key_id, aws_secret_access_key, aws_session_token];
+
         for var in environment_variables.iter() {
             match std::env::var_os(var) {
-                Some(value) => info!("| kaon environment | {:#?} : {:#?}", var, value),
+                Some(value) => info!("| kaon environment | {:#?}={:#?}", var, value),
                 None => info!("| kaon environment | {:#?} is not found", var),
+            }
+        }
+
+        for var in sensitive_environment_variables.iter() {
+            match std::env::var_os(var) {
+                Some(_) => info!("| kaon environment | {:#?} is set", var),
+                None => info!("| kaon environment | {:#?} is not set", var),
             }
         }
     }
