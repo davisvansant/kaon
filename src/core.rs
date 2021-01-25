@@ -1,8 +1,12 @@
+use hyper::body::Body;
+use hyper::client::connect::HttpConnector;
+use hyper::client::Client;
 use std::ffi::OsString;
 use tracing::{info, instrument};
 
 pub struct Kaon {
     pub environment: std::env::VarsOs,
+    pub client: Client<HttpConnector, Body>,
 }
 
 impl Kaon {
@@ -71,6 +75,7 @@ impl Kaon {
 
         Kaon {
             environment: std::env::vars_os(),
+            client: Client::new(),
         }
     }
 
