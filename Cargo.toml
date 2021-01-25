@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies.hyper]
 version = "0.14.2"
 default_features = false
-features = [ "client", "http1" ]
+features = [ "client", "http1", "tcp" ]
 
 [dependencies.tracing]
 version = "0.1.22"
