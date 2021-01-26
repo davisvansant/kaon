@@ -1,6 +1,8 @@
 use hyper::body::Body;
 use hyper::client::connect::HttpConnector;
 use hyper::client::Client;
+// use hyper::Request;
+use hyper::Uri;
 use std::ffi::OsString;
 use tracing::{info, instrument};
 
@@ -66,7 +68,33 @@ impl Kaon {
             }
         }
 
-        Some(aws_lambda_runtime_api)
+        // Some(aws_lambda_runtime_api)
+        match std::env::var_os(aws_lambda_runtime_api) {
+            Some(value) => Some(value),
+            None => None,
+        }
+    }
+
+    async fn get_event(&self) {
+        let authority = self.runtime_api.as_ref().unwrap().to_str().unwrap();
+        println!("{:?}", authority);
+
+        let next_invocation = Uri::builder()
+            .scheme("http")
+            .authority(authority)
+            .path_and_query("/runtime/invocation/next")
+            .build()
+            .unwrap();
+
+        let response = &self.client.get(next_invocation).await;
+
+        match &response {
+            Ok(event) => {
+                println!("{:?}", event.body());
+                println!("{:?}", event.headers());
+            }
+            Err(error) => println!("{:?}", error),
+        }
     }
 
     async fn process() {
@@ -83,8 +111,9 @@ impl Kaon {
         }
     }
 
-    pub async fn decay() {
+    pub async fn decay(&self) {
         Self::process().await;
+        Self::get_event(&self).await;
     }
 }
 
@@ -218,12 +247,23 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn get_event() {
+        let url = &mockito::server_address().to_string();
+        std::env::set_var("AWS_LAMBDA_RUNTIME_API", url);
+        let mock = mockito::mock("GET", "/runtime/invocation/next").create();
+        let kaon = Kaon::charge().await;
+        kaon.get_event().await;
+        mock.assert();
+        assert!(mock.matched());
+    }
+
+    #[tokio::test]
     async fn charge() {
-        std::env::set_var("AWS_LAMBDA_RUNTIME_API", "test_aws_lambda_runtime_api");
+        // std::env::set_var("AWS_LAMBDA_RUNTIME_API", "test_aws_lambda_runtime_api");
         let kaon = Kaon::charge().await;
         for (k, v) in kaon.environment {
             assert_eq!(std::env::var_os(k), Some(v));
         }
-        assert_eq!(kaon.runtime_api.is_some(), true);
+        assert_eq!(kaon.runtime_api.is_some(), false);
     }
 }
