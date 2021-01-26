@@ -1,9 +1,9 @@
 use hyper::body::Body;
 use hyper::client::connect::HttpConnector;
 use hyper::client::Client;
-// use hyper::Request;
 use hyper::header::HeaderValue;
 use hyper::HeaderMap;
+use hyper::Request;
 use hyper::Uri;
 use std::ffi::OsString;
 use tracing::{info, instrument};
@@ -109,6 +109,36 @@ impl Kaon {
                 .to_str()
                 .unwrap();
             std::env::set_var(x_amzn_trace_id, OsString::from(&value));
+        }
+    }
+
+    async fn handle_response(&self) {
+        let request_id = String::from("156cb537-e2d4-11e8-9b34-d36013741fb9");
+        let authority = self.runtime_api.as_ref().unwrap().to_str().unwrap();
+        let path_and_query = format!("/runtime/invocation/{}/response", request_id);
+
+        let invocation_response = Uri::builder()
+            .scheme("http")
+            .authority(authority)
+            .path_and_query(path_and_query)
+            .build()
+            .unwrap();
+
+        // let response = &self.client.post(next_invocation).await;
+        let request = Request::builder()
+            .method("POST")
+            .uri(invocation_response)
+            .body(Body::from("hi"))
+            .unwrap();
+
+        let response = &self.client.request(request).await;
+
+        match &response {
+            Ok(event) => {
+                println!("{:?}", event.body());
+                println!("{:?}", event.headers());
+            }
+            Err(error) => println!("{:?}", error),
         }
     }
 
