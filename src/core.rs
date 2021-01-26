@@ -2,6 +2,8 @@ use hyper::body::Body;
 use hyper::client::connect::HttpConnector;
 use hyper::client::Client;
 // use hyper::Request;
+use hyper::header::HeaderValue;
+use hyper::HeaderMap;
 use hyper::Uri;
 use std::ffi::OsString;
 use tracing::{info, instrument};
@@ -95,6 +97,18 @@ impl Kaon {
                 println!("{:?}", event.headers());
             }
             Err(error) => println!("{:?}", error),
+        }
+    }
+
+    async fn tracing_header(header: &HeaderMap<HeaderValue>) {
+        if header.contains_key("Lambda-Runtime-Trace-Id") {
+            let x_amzn_trace_id = OsString::from("_X_AMZN_TRACE_ID");
+            let value = &header
+                .get("Lambda-Runtime-Trace-Id")
+                .unwrap()
+                .to_str()
+                .unwrap();
+            std::env::set_var(x_amzn_trace_id, OsString::from(&value));
         }
     }
 
