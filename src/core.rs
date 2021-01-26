@@ -7,6 +7,7 @@ use std::ffi::OsString;
 use tracing::{info, instrument};
 
 pub struct Kaon {
+    pub in_flight: bool,
     pub environment: std::env::VarsOs,
     pub client: Client<HttpConnector, Body>,
     pub runtime_api: Option<OsString>,
@@ -105,15 +106,21 @@ impl Kaon {
         // Self::retrieve_environment().await;
 
         Kaon {
+            in_flight: false,
             environment: std::env::vars_os(),
             client: Client::new(),
             runtime_api: Self::retrieve_environment().await,
         }
     }
 
-    pub async fn decay(&self) {
+    pub async fn decay(&mut self) {
+        self.in_flight = true;
         Self::process().await;
         Self::get_event(&self).await;
+    }
+
+    pub async fn stop(&mut self) {
+        self.in_flight = false;
     }
 }
 
@@ -261,6 +268,7 @@ mod tests {
     async fn charge() {
         // std::env::set_var("AWS_LAMBDA_RUNTIME_API", "test_aws_lambda_runtime_api");
         let kaon = Kaon::charge().await;
+        assert_eq!(kaon.in_flight, false);
         for (k, v) in kaon.environment {
             assert_eq!(std::env::var_os(k), Some(v));
         }
