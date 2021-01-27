@@ -172,6 +172,35 @@ impl Kaon {
         }
     }
 
+    async fn initialization_error(&self) {
+        let authority = self.runtime_api.as_ref().unwrap().to_str().unwrap();
+        // let path_and_query = format!("/runtime/init/error", request_id);
+
+        let invocation_error = Uri::builder()
+            .scheme("http")
+            .authority(authority)
+            .path_and_query("/runtime/init/error")
+            .build()
+            .unwrap();
+
+        let request = Request::builder()
+            .method("POST")
+            .header("Lambda-Runtime-Function-Error-Type", "Unhandled")
+            .uri(invocation_error)
+            .body(Body::from("some error"))
+            .unwrap();
+
+        let response = &self.client.request(request).await;
+
+        match &response {
+            Ok(event) => {
+                println!("{:?}", event.body());
+                println!("{:?}", event.headers());
+            }
+            Err(error) => println!("{:?}", error),
+        }
+    }
+
     async fn process() {
         unimplemented!()
     }
