@@ -2,6 +2,7 @@ use hyper::body::Body;
 use hyper::client::connect::HttpConnector;
 use hyper::client::Client;
 use hyper::header::HeaderValue;
+use hyper::http::uri::Authority;
 use hyper::HeaderMap;
 use hyper::Request;
 use hyper::Uri;
@@ -75,6 +76,25 @@ impl Kaon {
         match std::env::var_os(aws_lambda_runtime_api) {
             Some(value) => Some(value),
             None => None,
+        }
+    }
+
+    #[instrument]
+    async fn build_uri(authority: Authority) -> Result<hyper::Uri, hyper::http::Error> {
+        let uri = Uri::builder()
+            .scheme("http")
+            .authority(authority)
+            .path_and_query("/runtime/invocation/next")
+            .build();
+        match uri {
+            Ok(built_uri) => {
+                info!("| kaon uri | {:?} is built!", &built_uri);
+                Ok(built_uri)
+            }
+            Err(error) => {
+                info!("| kaon uri | {}", error);
+                Err(error)
+            }
         }
     }
 
@@ -354,6 +374,15 @@ mod tests {
         for var in test_environment_variables.iter() {
             assert!(std::env::var_os(var).is_some());
         }
+    }
+
+    #[tokio::test]
+    async fn build_uri() -> Result<(), hyper::http::Error> {
+        let authority = Authority::from_static("test_aws_lambda_runtime_api");
+        let uri = Kaon::build_uri(authority).await?;
+        assert_eq!(uri.host(), Some("test_aws_lambda_runtime_api"));
+        assert_eq!(uri.path(), "/runtime/invocation/next");
+        Ok(())
     }
 
     #[tokio::test]
