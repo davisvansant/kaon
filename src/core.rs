@@ -2,7 +2,7 @@ use hyper::body::Body;
 use hyper::client::connect::HttpConnector;
 use hyper::client::Client;
 use hyper::header::HeaderValue;
-use hyper::http::uri::Authority;
+use hyper::http::uri::{Authority, Scheme};
 use hyper::HeaderMap;
 use hyper::Request;
 use hyper::Uri;
@@ -80,11 +80,11 @@ impl Kaon {
     }
 
     #[instrument]
-    async fn build_uri(authority: Authority) -> Result<hyper::Uri, hyper::http::Error> {
+    async fn build_uri(authority: Authority, path: &str) -> Result<hyper::Uri, hyper::http::Error> {
         let uri = Uri::builder()
-            .scheme("http")
+            .scheme(Scheme::HTTP)
             .authority(authority)
-            .path_and_query("/runtime/invocation/next")
+            .path_and_query(format!("/2018-06-01{}", path))
             .build();
         match uri {
             Ok(built_uri) => {
@@ -379,9 +379,11 @@ mod tests {
     #[tokio::test]
     async fn build_uri() -> Result<(), hyper::http::Error> {
         let authority = Authority::from_static("test_aws_lambda_runtime_api");
-        let uri = Kaon::build_uri(authority).await?;
+        let path = String::from("/runtime/invocation/next");
+        let uri = Kaon::build_uri(authority, &path).await?;
+        assert_eq!(uri.scheme(), Some(&Scheme::HTTP));
         assert_eq!(uri.host(), Some("test_aws_lambda_runtime_api"));
-        assert_eq!(uri.path(), "/runtime/invocation/next");
+        assert_eq!(uri.path(), "/2018-06-01/runtime/invocation/next");
         Ok(())
     }
 
