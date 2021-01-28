@@ -98,17 +98,13 @@ impl Kaon {
         }
     }
 
-    async fn get_event(&self) {
-        let authority = self.runtime_api.as_ref().unwrap().to_str().unwrap();
-        println!("{:?}", authority);
-
-        let next_invocation = Uri::builder()
-            .scheme("http")
-            .authority(authority)
-            .path_and_query("/runtime/invocation/next")
-            .build()
-            .unwrap();
-
+    async fn get_event(&self) -> Result<(), hyper::http::Error> {
+        let runtime_api = self.runtime_api.clone().unwrap();
+        let runtime_api_string = runtime_api.into_string().unwrap();
+        let runtime_api_bytes = runtime_api_string.into_bytes();
+        let authority = Authority::from_maybe_shared(runtime_api_bytes).unwrap();
+        let path = "/runtime/invocation/next";
+        let next_invocation = Self::build_uri(authority, path).await?;
         let response = &self.client.get(next_invocation).await;
 
         match &response {
@@ -118,6 +114,7 @@ impl Kaon {
             }
             Err(error) => println!("{:?}", error),
         }
+        Ok(())
     }
 
     async fn tracing_header(header: &HeaderMap<HeaderValue>) {
@@ -388,14 +385,15 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_event() {
+    async fn get_event() -> Result<(), hyper::http::Error> {
         let url = &mockito::server_address().to_string();
         std::env::set_var("AWS_LAMBDA_RUNTIME_API", url);
-        let mock = mockito::mock("GET", "/runtime/invocation/next").create();
+        let mock = mockito::mock("GET", "/2018-06-01/runtime/invocation/next").create();
         let kaon = Kaon::charge().await;
-        kaon.get_event().await;
+        kaon.get_event().await?;
         mock.assert();
         assert!(mock.matched());
+        Ok(())
     }
 
     #[tokio::test]
