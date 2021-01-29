@@ -34,7 +34,7 @@ impl Api {
         }
     }
 
-    pub async fn runtime_next_event(&self) -> Result<(), hyper::http::Error> {
+    pub async fn runtime_next_invocation(&self) -> Result<(), hyper::http::Error> {
         let path = "/runtime/invocation/next";
         let uri = Self::build_uri(&self.runtime_api, path).await;
         let response = &self.client.get(uri).await;
@@ -139,13 +139,13 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn runtime_next_event() -> Result<(), hyper::http::Error> {
+    async fn runtime_next_invocation() -> Result<(), hyper::http::Error> {
         let test_api = Api {
             client: Client::new(),
             runtime_api: mockito::server_address().to_string(),
         };
         let mock = mockito::mock("GET", "/2018-06-01/runtime/invocation/next").create();
-        Api::runtime_next_event(&test_api).await?;
+        Api::runtime_next_invocation(&test_api).await?;
         mock.assert();
         assert!(mock.matched());
         Ok(())
