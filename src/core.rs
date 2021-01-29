@@ -240,9 +240,9 @@ impl Kaon {
     //     }
     // }
 
-    async fn process() {
-        unimplemented!()
-    }
+    // async fn process() {
+    //     unimplemented!()
+    // }
 
     pub async fn charge() -> Kaon {
         // Self::retrieve_environment().await;
@@ -262,8 +262,15 @@ impl Kaon {
 
     pub async fn decay(&mut self) {
         self.in_flight = true;
-        Self::process().await;
+        // Self::process().await;
         // Self::get_event(&self).await;
+        if self.in_flight {
+            loop {
+                let _event = self.api.runtime_next_invocation().await;
+                // let context = self.api.create_context().await;
+                // let handler = self.handler(event, context).await;
+            }
+        }
     }
 
     pub async fn stop(&mut self) {
