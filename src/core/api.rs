@@ -160,8 +160,14 @@ mod tests {
         assert_eq!(test_headers.len(), 1);
         let test_environment_variable = OsString::from("_X_AMZN_TRACE_ID");
         assert_eq!(std::env::var_os(&test_environment_variable).is_none(), true);
-        let test_set_tracing_header = Api::set_tracing_header(&test_headers).await;
+        Api::set_tracing_header(&test_headers).await;
         assert_eq!(std::env::var_os(&test_environment_variable).is_some(), true);
+        assert_eq!(
+            std::env::var_os(test_environment_variable),
+            Some(OsString::from(
+                "Root=1-5759e988-bd862e3fe1be46a994272793;Parent=53995c3f42cd8ad8;Sampled=1"
+            )),
+        );
     }
 
     #[tokio::test]
