@@ -1,12 +1,12 @@
 use hyper::body::Body;
 use hyper::client::connect::HttpConnector;
 use hyper::client::Client;
-// use hyper::header::HeaderValue;
+use hyper::header::HeaderValue;
 use hyper::http::uri::Scheme;
-// use hyper::HeaderMap;
+use hyper::HeaderMap;
 use hyper::Request;
 use hyper::Uri;
-// use std::ffi::OsString;
+use std::ffi::OsString;
 use tracing::{info, instrument};
 
 pub struct Api {
@@ -34,6 +34,18 @@ impl Api {
         }
     }
 
+    async fn set_tracing_header(header: &HeaderMap<HeaderValue>) {
+        if header.contains_key("Lambda-Runtime-Trace-Id") {
+            let x_amzn_trace_id = OsString::from("_X_AMZN_TRACE_ID");
+            let value = &header
+                .get("Lambda-Runtime-Trace-Id")
+                .unwrap()
+                .to_str()
+                .unwrap();
+            std::env::set_var(x_amzn_trace_id, OsString::from(&value));
+        }
+    }
+
     pub async fn runtime_next_invocation(&self) -> Result<(), hyper::http::Error> {
         let path = "/runtime/invocation/next";
         let uri = Self::build_uri(&self.runtime_api, path).await;
@@ -48,18 +60,6 @@ impl Api {
         }
         Ok(())
     }
-
-    // async fn tracing_header(header: &HeaderMap<HeaderValue>) {
-    //     if header.contains_key("Lambda-Runtime-Trace-Id") {
-    //         let x_amzn_trace_id = OsString::from("_X_AMZN_TRACE_ID");
-    //         let value = &header
-    //             .get("Lambda-Runtime-Trace-Id")
-    //             .unwrap()
-    //             .to_str()
-    //             .unwrap();
-    //         std::env::set_var(x_amzn_trace_id, OsString::from(&value));
-    //     }
-    // }
 
     pub async fn runtime_invocation_response(
         &self,
@@ -143,6 +143,25 @@ mod tests {
         assert_eq!(uri.host(), Some("test_aws_lambda_runtime_api"));
         assert_eq!(uri.path(), "/2018-06-01/runtime/invocation/next");
         Ok(())
+    }
+
+    #[tokio::test]
+    async fn set_tracing_header() {
+        let mut test_headers = HeaderMap::new();
+        let test_x_amzn_trace_id_header_key = "Lambda-Runtime-Trace-Id";
+        let test_x_amzn_trace_id_header_value = HeaderValue::from_static(
+            "Root=1-5759e988-bd862e3fe1be46a994272793;Parent=53995c3f42cd8ad8;Sampled=1",
+        );
+        assert_eq!(test_headers.len(), 0);
+        test_headers.insert(
+            test_x_amzn_trace_id_header_key,
+            test_x_amzn_trace_id_header_value,
+        );
+        assert_eq!(test_headers.len(), 1);
+        let test_environment_variable = OsString::from("_X_AMZN_TRACE_ID");
+        assert_eq!(std::env::var_os(&test_environment_variable).is_none(), true);
+        let test_set_tracing_header = Api::set_tracing_header(&test_headers).await;
+        assert_eq!(std::env::var_os(&test_environment_variable).is_some(), true);
     }
 
     #[tokio::test]
