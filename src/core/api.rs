@@ -84,8 +84,10 @@ impl Api {
         Ok(())
     }
 
-    pub async fn runtime_invocation_error(&self) {
-        let request_id = String::from("156cb537-e2d4-11e8-9b34-d36013741fb9");
+    pub async fn runtime_invocation_error(
+        &self,
+        request_id: String,
+    ) -> Result<(), hyper::http::Error> {
         let path = format!("/runtime/invocation/{}/error", request_id);
         let uri = Self::build_uri(&self.runtime_api, &path).await;
         let request = Request::builder()
@@ -103,6 +105,7 @@ impl Api {
             }
             Err(error) => println!("{:?}", error),
         }
+        Ok(())
     }
 
     pub async fn runtime_initialization_error(&self) {
@@ -167,6 +170,24 @@ mod tests {
         )
         .create();
         Api::runtime_invocation_response(&test_api, test_request_id).await?;
+        mock.assert();
+        assert!(mock.matched());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn runtime_invocation_error() -> Result<(), hyper::http::Error> {
+        let test_api = Api {
+            client: Client::new(),
+            runtime_api: mockito::server_address().to_string(),
+        };
+        let test_request_id = String::from("156cb537-e2d4-11e8-9b34-d36013741fb9");
+        let mock = mockito::mock(
+            "POST",
+            "/2018-06-01/runtime/invocation/156cb537-e2d4-11e8-9b34-d36013741fb9/error",
+        )
+        .create();
+        Api::runtime_invocation_error(&test_api, test_request_id).await?;
         mock.assert();
         assert!(mock.matched());
         Ok(())
