@@ -9,6 +9,7 @@ use hyper::Uri;
 use std::ffi::OsString;
 use tracing::{info, instrument};
 
+#[derive(Debug)]
 pub struct Api {
     pub client: Client<HttpConnector, Body>,
     pub runtime_api: String,

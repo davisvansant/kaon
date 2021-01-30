@@ -1,11 +1,12 @@
 use hyper::client::Client;
 use std::ffi::OsString;
-use tracing::{info, instrument};
+use tracing::{info, instrument, warn};
 
 mod api;
 
 use crate::core::api::Api;
 
+#[derive(Debug)]
 pub struct Kaon {
     pub in_flight: bool,
     pub environment: std::env::VarsOs,
@@ -63,8 +64,8 @@ impl Kaon {
 
         for var in sensitive_environment_variables.iter() {
             match std::env::var_os(var) {
-                Some(_) => info!("| kaon environment | {:#?} is set", var),
-                None => info!("| kaon environment | {:#?} is not set", var),
+                Some(_) => warn!("| kaon environment | {:#?} is set", var),
+                None => warn!("| kaon environment | {:#?} is not set", var),
             }
         }
 
@@ -77,11 +78,14 @@ impl Kaon {
         }
     }
 
+    #[instrument]
     pub async fn charge() -> Kaon {
         let api = Api {
             client: Client::new(),
             runtime_api: Self::retrieve_environment().await,
         };
+
+        info!("| kaon charge | Kaon is charged!");
 
         Kaon {
             in_flight: false,
@@ -90,8 +94,11 @@ impl Kaon {
         }
     }
 
+    #[instrument]
     pub async fn decay(&mut self) {
         self.in_flight = true;
+
+        info!("| kaon decay | Kaon decay is in process ...");
 
         if self.in_flight {
             loop {
@@ -104,6 +111,7 @@ impl Kaon {
 
     pub async fn stop(&mut self) {
         self.in_flight = false;
+        info!("| kaon decay | Kaon decay stopped ...");
     }
 }
 
