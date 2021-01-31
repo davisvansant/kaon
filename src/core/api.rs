@@ -7,7 +7,7 @@ use hyper::HeaderMap;
 use hyper::Request;
 use hyper::Uri;
 use std::ffi::OsString;
-use tracing::{info, instrument};
+use tracing::{error, info, instrument};
 
 #[derive(Debug)]
 pub struct Api {
@@ -29,12 +29,13 @@ impl Api {
                 built_uri
             }
             Err(error) => {
-                info!("| kaon uri | {}", error);
+                error!("| kaon uri | {}", error);
                 panic!("cannot build uri");
             }
         }
     }
 
+    #[instrument]
     async fn set_tracing_header(header: &HeaderMap<HeaderValue>) {
         if header.contains_key("Lambda-Runtime-Trace-Id") {
             let x_amzn_trace_id = OsString::from("_X_AMZN_TRACE_ID");
@@ -45,8 +46,10 @@ impl Api {
                 .unwrap();
             std::env::set_var(x_amzn_trace_id, OsString::from(&value));
         }
+        info!("| kaon api | _X_AMZN_TRACE_ID environment variable set");
     }
 
+    #[instrument]
     pub async fn runtime_next_invocation(&self) -> Result<(), hyper::http::Error> {
         let path = "/runtime/invocation/next";
         let uri = Self::build_uri(&self.runtime_api, path).await;
@@ -57,11 +60,12 @@ impl Api {
                 println!("{:?}", event.body());
                 println!("{:?}", event.headers());
             }
-            Err(error) => println!("{:?}", error),
+            Err(error) => error!("| kaon api | {:?}", error),
         }
         Ok(())
     }
 
+    #[instrument]
     pub async fn runtime_invocation_response(
         &self,
         request_id: String,
@@ -80,11 +84,12 @@ impl Api {
                 println!("{:?}", event.body());
                 println!("{:?}", event.headers());
             }
-            Err(error) => println!("{:?}", error),
+            Err(error) => error!("| kaon api | {:?}", error),
         }
         Ok(())
     }
 
+    #[instrument]
     pub async fn runtime_invocation_error(
         &self,
         request_id: String,
@@ -104,11 +109,12 @@ impl Api {
                 println!("{:?}", event.body());
                 println!("{:?}", event.headers());
             }
-            Err(error) => println!("{:?}", error),
+            Err(error) => error!("| kaon api | {:?}", error),
         }
         Ok(())
     }
 
+    #[instrument]
     pub async fn runtime_initialization_error(&self) -> Result<(), hyper::http::Error> {
         let path = "/runtime/init/error";
         let uri = Self::build_uri(&self.runtime_api, &path).await;
@@ -125,7 +131,7 @@ impl Api {
                 println!("{:?}", event.body());
                 println!("{:?}", event.headers());
             }
-            Err(error) => println!("{:?}", error),
+            Err(error) => error!("| kaon api | {:?}", error),
         }
         Ok(())
     }
