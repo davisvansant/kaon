@@ -103,6 +103,7 @@ impl Api {
     pub async fn runtime_invocation_error(
         &self,
         request_id: String,
+        error: Body,
     ) -> Result<(), hyper::http::Error> {
         let path = format!("/runtime/invocation/{}/error", request_id);
         let uri = Self::build_uri(&self.runtime_api, &path).await;
@@ -110,14 +111,16 @@ impl Api {
             .method("POST")
             .header("Lambda-Runtime-Function-Error-Type", "Unhandled")
             .uri(uri)
-            .body(Body::from("some error"))
+            // .body(Body::from("some error"))
+            .body(error)
             .unwrap();
         let response = &self.client.request(request).await;
 
         match &response {
             Ok(event) => {
-                println!("{:?}", event.body());
-                println!("{:?}", event.headers());
+                // println!("{:?}", event.body());
+                // println!("{:?}", event.headers());
+                info!("| kaon api | error sent {:?}", event.status());
             }
             Err(error) => error!("| kaon api | {:?}", error),
         }
@@ -316,12 +319,18 @@ mod tests {
             runtime_api: mockito::server_address().to_string(),
         };
         let test_request_id = String::from("156cb537-e2d4-11e8-9b34-d36013741fb9");
+        let test_error = Body::from(
+            r#"{"errorMessage": "test_kaon_error_message", "errorType": "test_kaon_error_type"}"#,
+        );
         let mock = mockito::mock(
             "POST",
             "/2018-06-01/runtime/invocation/156cb537-e2d4-11e8-9b34-d36013741fb9/error",
         )
+        .match_body(
+            r#"{"errorMessage": "test_kaon_error_message", "errorType": "test_kaon_error_type"}"#,
+        )
         .create();
-        Api::runtime_invocation_error(&test_api, test_request_id).await?;
+        Api::runtime_invocation_error(&test_api, test_request_id, test_error).await?;
         mock.assert();
         assert!(mock.matched());
         Ok(())
