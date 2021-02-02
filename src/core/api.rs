@@ -5,6 +5,7 @@ use hyper::header::HeaderValue;
 use hyper::http::uri::Scheme;
 use hyper::HeaderMap;
 use hyper::Request;
+use hyper::Response;
 use hyper::Uri;
 use std::ffi::OsString;
 use tracing::{error, info, instrument};
@@ -50,19 +51,25 @@ impl Api {
     }
 
     #[instrument]
-    pub async fn runtime_next_invocation(&self) -> Result<(), hyper::http::Error> {
+    pub async fn runtime_next_invocation(&self) -> Result<Response<Body>, hyper::Error> {
         let path = "/runtime/invocation/next";
         let uri = Self::build_uri(&self.runtime_api, path).await;
-        let response = &self.client.get(uri).await;
+        // let response = &self.client.get(uri).await;
+        let response = self.client.get(uri).await;
 
-        match &response {
+        match response {
             Ok(event) => {
-                println!("{:?}", event.body());
-                println!("{:?}", event.headers());
+                // println!("{:?}", event.body());
+                // println!("{:?}", event.headers());
+                info!("| kaon api | Event received!");
+                Ok(event)
             }
-            Err(error) => error!("| kaon api | {:?}", error),
+            Err(error) => {
+                error!("| kaon api | {:?}", error);
+                Err(error)
+            }
         }
-        Ok(())
+        // Ok(())
     }
 
     #[instrument]
@@ -178,7 +185,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn runtime_next_invocation() -> Result<(), hyper::http::Error> {
+    async fn runtime_next_invocation() -> Result<(), hyper::Error> {
         let test_api = Api {
             client: Client::new(),
             runtime_api: mockito::server_address().to_string(),
