@@ -76,20 +76,23 @@ impl Api {
     pub async fn runtime_invocation_response(
         &self,
         request_id: String,
+        response: Body,
     ) -> Result<(), hyper::http::Error> {
         let path = format!("/runtime/invocation/{}/response", request_id);
         let uri = Self::build_uri(&self.runtime_api, &path).await;
         let request = Request::builder()
             .method("POST")
             .uri(uri)
-            .body(Body::from("hi"))
+            // .body(Body::from("hi"))
+            .body(response)
             .unwrap();
         let response = &self.client.request(request).await;
 
         match &response {
             Ok(event) => {
-                println!("{:?}", event.body());
-                println!("{:?}", event.headers());
+                // println!("{:?}", event.body());
+                // println!("{:?}", event.headers());
+                info!("| kaon api | response {:?}", event.status());
             }
             Err(error) => error!("| kaon api | {:?}", error),
         }
@@ -288,12 +291,14 @@ mod tests {
             runtime_api: mockito::server_address().to_string(),
         };
         let test_request_id = String::from("156cb537-e2d4-11e8-9b34-d36013741fb9");
+        let test_body = Body::from("SUCCESS");
         let mock = mockito::mock(
             "POST",
             "/2018-06-01/runtime/invocation/156cb537-e2d4-11e8-9b34-d36013741fb9/response",
         )
+        .match_body("SUCCESS")
         .create();
-        Api::runtime_invocation_response(&test_api, test_request_id).await?;
+        Api::runtime_invocation_response(&test_api, test_request_id, test_body).await?;
         mock.assert();
         assert!(mock.matched());
         Ok(())
