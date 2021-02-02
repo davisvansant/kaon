@@ -78,6 +78,15 @@ impl Kaon {
         }
     }
 
+    // #[instrument]
+    // async fn handler<F: Fn() + std::fmt::Debug>(f: F) {
+    //     info!("| kaon handler | Kaon is invoking function!");
+    //     f();
+    // }
+    async fn handler<F: Fn()>(f: F) {
+        f();
+    }
+
     #[instrument]
     pub async fn charge() -> Kaon {
         let api = Api {
@@ -94,17 +103,19 @@ impl Kaon {
         }
     }
 
-    #[instrument]
-    pub async fn decay(&mut self) {
+    // #[instrument]
+    pub async fn decay<F: Fn() + Copy>(&mut self, function: F) {
         self.in_flight = true;
 
-        info!("| kaon decay | Kaon decay is in process ...");
+        // info!("| kaon decay | Kaon decay is in process ...");
 
         if self.in_flight {
             loop {
                 let _event = self.api.runtime_next_invocation().await;
                 // let context = self.api.create_context().await;
-                // let handler = self.handler(event, context).await;
+                // let test_function = || println!("test kaon event!");
+                // let _handler = Self::handler(test_function).await;
+                let _handler = Self::handler(function).await;
             }
         }
     }
@@ -245,6 +256,13 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn handler() {
+        // test currently does nothing
+        let test_event = || println!("test kaon event!");
+        Kaon::handler(test_event).await;
+    }
+
+    #[tokio::test]
     async fn charge() {
         std::env::set_var("AWS_LAMBDA_RUNTIME_API", "test_aws_lambda_runtime_api");
         let kaon = Kaon::charge().await;
@@ -254,4 +272,17 @@ mod tests {
         }
         assert_eq!(kaon.api.runtime_api.is_empty(), false);
     }
+
+    // #[tokio::test]
+    // async fn decay() {
+    //     let test_aws_lambda_runtime_api = mockito::server_address().to_string();
+    //     std::env::set_var("AWS_LAMBDA_RUNTIME_API", test_aws_lambda_runtime_api);
+    //     let mut kaon = Kaon::charge().await;
+    //     assert_eq!(kaon.in_flight, false);
+    //     let test_event = || println!("test kaon event!");
+    //     kaon.decay(test_event).await;
+    //     assert_eq!(kaon.in_flight, true);
+    //     kaon.stop();
+    //     assert_eq!(kaon.in_flight, false);
+    // }
 }
