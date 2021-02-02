@@ -125,21 +125,26 @@ impl Api {
     }
 
     #[instrument]
-    pub async fn runtime_initialization_error(&self) -> Result<(), hyper::http::Error> {
+    pub async fn runtime_initialization_error(
+        &self,
+        error: Body,
+    ) -> Result<(), hyper::http::Error> {
         let path = "/runtime/init/error";
         let uri = Self::build_uri(&self.runtime_api, &path).await;
         let request = Request::builder()
             .method("POST")
             .header("Lambda-Runtime-Function-Error-Type", "Unhandled")
             .uri(uri)
-            .body(Body::from("some error"))
+            // .body(Body::from("some error"))
+            .body(error)
             .unwrap();
         let response = &self.client.request(request).await;
 
         match &response {
             Ok(event) => {
-                println!("{:?}", event.body());
-                println!("{:?}", event.headers());
+                // println!("{:?}", event.body());
+                // println!("{:?}", event.headers());
+                info!("| kaon api | error sent {:?}", event.status())
             }
             Err(error) => error!("| kaon api | {:?}", error),
         }
@@ -328,8 +333,13 @@ mod tests {
             client: Client::new(),
             runtime_api: mockito::server_address().to_string(),
         };
-        let mock = mockito::mock("POST", "/2018-06-01/runtime/init/error").create();
-        Api::runtime_initialization_error(&test_api).await?;
+        let test_error = Body::from(
+            r#"{"errorMessage": "test_kaon_error_message", "errorType": "test_kaon_error_type"}"#,
+        );
+        let mock = mockito::mock("POST", "/2018-06-01/runtime/init/error")
+            .match_body(r#"{"errorMessage": "test_kaon_error_message", "errorType": "test_kaon_error_type"}"#)
+            .create();
+        Api::runtime_initialization_error(&test_api, test_error).await?;
         mock.assert();
         assert!(mock.matched());
         Ok(())
