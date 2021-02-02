@@ -190,10 +190,94 @@ mod tests {
             client: Client::new(),
             runtime_api: mockito::server_address().to_string(),
         };
-        let mock = mockito::mock("GET", "/2018-06-01/runtime/invocation/next").create();
-        Api::runtime_next_invocation(&test_api).await?;
+        let mock = mockito::mock("GET", "/2018-06-01/runtime/invocation/next")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_header(
+                "Lambda-Runtime-Aws-Request-Id",
+                "8476a536-e9f4-11e8-9739-2dfe598c3fcd",
+            )
+            .with_header(
+                "Lambda-Runtime-Trace-Id",
+                "Root=1-5bef4de7-ad49b0e87f6ef6c87fc2e700;Parent=9a9197af755a6419;Sampled=1",
+            )
+            .with_header(
+                "Lambda-Runtime-Client-Context",
+                "test_aws_mobile_sdk_client_and_device",
+            )
+            .with_header(
+                "Lambda-Runtime-Cognito-Identity",
+                "test_aws_module_sdk_cognito_idp",
+            )
+            .with_header("Lambda-Runtime-Deadline-Ms", "1542409706888")
+            .with_header(
+                "Lambda-Runtime-Invoked-Function-Arn",
+                "arn:aws:lambda:us-east-2:123456789012:function:custom-runtime",
+            )
+            .with_body(r#"{"test": "kaon"}"#)
+            .create();
+        let response = Api::runtime_next_invocation(&test_api).await?;
         mock.assert();
         assert!(mock.matched());
+        assert!(&response.status().is_success());
+        let headers = response.headers();
+        assert_eq!(
+            &headers.get("content-type").unwrap().to_str().unwrap(),
+            &"application/json"
+        );
+        assert_eq!(
+            &headers
+                .get("Lambda-Runtime-Aws-Request-Id")
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            &"8476a536-e9f4-11e8-9739-2dfe598c3fcd"
+        );
+        assert_eq!(
+            &headers
+                .get("Lambda-Runtime-Trace-Id")
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            &"Root=1-5bef4de7-ad49b0e87f6ef6c87fc2e700;Parent=9a9197af755a6419;Sampled=1"
+        );
+        assert_eq!(
+            &headers
+                .get("Lambda-Runtime-Client-Context")
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            &"test_aws_mobile_sdk_client_and_device"
+        );
+        assert_eq!(
+            &headers
+                .get("Lambda-Runtime-Cognito-Identity")
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            &"test_aws_module_sdk_cognito_idp"
+        );
+        assert_eq!(
+            &headers
+                .get("Lambda-Runtime-Deadline-Ms")
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            &"1542409706888"
+        );
+        assert_eq!(
+            &headers
+                .get("Lambda-Runtime-Invoked-Function-Arn")
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            &"arn:aws:lambda:us-east-2:123456789012:function:custom-runtime"
+        );
+        let body = response.into_body();
+        assert_eq!(
+            hyper::body::to_bytes(body).await.unwrap(),
+            r#"{"test": "kaon"}"#
+        );
         Ok(())
     }
 
