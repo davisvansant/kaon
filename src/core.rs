@@ -3,8 +3,10 @@ use std::ffi::OsString;
 use tracing::{info, instrument, warn};
 
 mod api;
+mod context;
 
 use crate::core::api::Api;
+use crate::core::context::Context;
 
 #[derive(Debug)]
 pub struct Kaon {
@@ -111,7 +113,35 @@ impl Kaon {
 
         if self.in_flight {
             loop {
-                let _event = self.api.runtime_next_invocation().await;
+                let event = self.api.runtime_next_invocation().await;
+                // let request_id = &event
+                //     .unwrap()
+                //     .headers()
+                //     .get("Lambda-Runtime-Aws-Request-Id")
+                //     .unwrap()
+                //     .to_str()
+                //     .unwrap()
+                //     .to_string();
+                // create context object here
+                match event {
+                    Ok(event_response) => {
+                        let headers = &event_response.headers();
+                        Api::set_tracing_header(headers).await;
+                        let id = &headers.get("Lambda-Runtime-Aws-Request-Id").unwrap();
+                        let arn = &headers.get("Lambda-Runtime-Invoked-Function-Arn").unwrap();
+                        let identity = &headers.get("Lambda-Runtime-Cognito-Identity").unwrap();
+                        let client = &headers.get("Lambda-Runtime-Client-Context").unwrap();
+                        Context::create(
+                            id.to_str().unwrap().to_string(),
+                            arn.to_str().unwrap().to_string(),
+                            identity.to_str().unwrap().to_string(),
+                            client.to_str().unwrap().to_string(),
+                        )
+                        .await;
+                    }
+                    Err(_) => {}
+                }
+                // Api::set_tracing_header(&event.unwrap().headers()).await;
                 // let context = self.api.create_context().await;
                 // let test_function = || println!("test kaon event!");
                 // let _handler = Self::handler(test_function).await;
