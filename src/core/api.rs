@@ -37,7 +37,7 @@ impl Api {
     }
 
     #[instrument]
-    async fn set_tracing_header(header: &HeaderMap<HeaderValue>) {
+    pub async fn set_tracing_header(header: &HeaderMap<HeaderValue>) {
         if header.contains_key("Lambda-Runtime-Trace-Id") {
             let x_amzn_trace_id = OsString::from("_X_AMZN_TRACE_ID");
             let value = &header
