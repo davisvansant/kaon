@@ -26,7 +26,7 @@ impl Api {
             .build();
         match uri {
             Ok(built_uri) => {
-                info!("| kaon uri | {:?} is built!", &built_uri);
+                info!("| kaon uri | Built URI - {:?}", &built_uri);
                 built_uri
             }
             Err(error) => {
