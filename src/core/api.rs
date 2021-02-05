@@ -75,7 +75,7 @@ impl Api {
     #[instrument]
     pub async fn runtime_invocation_response(
         &self,
-        request_id: String,
+        request_id: &str,
         response: Body,
     ) -> Result<(), hyper::http::Error> {
         let path = format!("/runtime/invocation/{}/response", request_id);
@@ -102,7 +102,7 @@ impl Api {
     #[instrument]
     pub async fn runtime_invocation_error(
         &self,
-        request_id: String,
+        request_id: &str,
         error: Body,
     ) -> Result<(), hyper::http::Error> {
         let path = format!("/runtime/invocation/{}/error", request_id);
@@ -306,7 +306,7 @@ mod tests {
         )
         .match_body("SUCCESS")
         .create();
-        Api::runtime_invocation_response(&test_api, test_request_id, test_body).await?;
+        Api::runtime_invocation_response(&test_api, &test_request_id, test_body).await?;
         mock.assert();
         assert!(mock.matched());
         Ok(())
@@ -330,7 +330,7 @@ mod tests {
             r#"{"errorMessage": "test_kaon_error_message", "errorType": "test_kaon_error_type"}"#,
         )
         .create();
-        Api::runtime_invocation_error(&test_api, test_request_id, test_error).await?;
+        Api::runtime_invocation_error(&test_api, &test_request_id, test_error).await?;
         mock.assert();
         assert!(mock.matched());
         Ok(())
