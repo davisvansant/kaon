@@ -1,3 +1,4 @@
+use hyper::body::Body;
 use hyper::client::Client;
 use std::ffi::OsString;
 use tracing::{info, instrument, warn};
@@ -106,7 +107,10 @@ impl Kaon {
     }
 
     // #[instrument]
-    pub async fn decay<F: Fn() + Copy>(&mut self, function: F) {
+    pub async fn decay<F: Fn() + Copy + std::fmt::Display + std::fmt::Debug>(
+        &mut self,
+        function: F,
+    ) {
         self.in_flight = true;
 
         // info!("| kaon decay | Kaon decay is in process ...");
@@ -114,15 +118,7 @@ impl Kaon {
         if self.in_flight {
             loop {
                 let event = self.api.runtime_next_invocation().await;
-                // let request_id = &event
-                //     .unwrap()
-                //     .headers()
-                //     .get("Lambda-Runtime-Aws-Request-Id")
-                //     .unwrap()
-                //     .to_str()
-                //     .unwrap()
-                //     .to_string();
-                // create context object here
+
                 match event {
                     Ok(event_response) => {
                         let headers = &event_response.headers();
@@ -131,21 +127,22 @@ impl Kaon {
                         let arn = &headers.get("Lambda-Runtime-Invoked-Function-Arn").unwrap();
                         let identity = &headers.get("Lambda-Runtime-Cognito-Identity").unwrap();
                         let client = &headers.get("Lambda-Runtime-Client-Context").unwrap();
-                        Context::create(
+                        let context = Context::create(
                             id.to_str().unwrap().to_string(),
                             arn.to_str().unwrap().to_string(),
                             identity.to_str().unwrap().to_string(),
                             client.to_str().unwrap().to_string(),
                         )
                         .await;
+                        let invoke_handler = Self::handler(function).await;
+                        let fake_body = Body::from("more to come...");
+                        let handle_response = self
+                            .api
+                            .runtime_invocation_response(&context.aws_request_id, fake_body)
+                            .await;
                     }
                     Err(_) => {}
                 }
-                // Api::set_tracing_header(&event.unwrap().headers()).await;
-                // let context = self.api.create_context().await;
-                // let test_function = || println!("test kaon event!");
-                // let _handler = Self::handler(test_function).await;
-                let _handler = Self::handler(function).await;
             }
         }
     }
@@ -288,8 +285,21 @@ mod tests {
     #[tokio::test]
     async fn handler() {
         // test currently does nothing
-        let test_event = || println!("test kaon event!");
-        Kaon::handler(test_event).await;
+        let test_aws_request_id = String::from("8476a536-e9f4-11e8-9739-2dfe598c3fcd");
+        let test_arn =
+            String::from("arn:aws:lambda:us-east-2:123456789012:function:custom-runtime");
+        let test_identity = String::from("test_identity");
+        let test_client_context = String::from("test_client_context");
+
+        let test_context = Context::create(
+            test_aws_request_id,
+            test_arn,
+            test_identity,
+            test_client_context,
+        )
+        .await;
+        // let test_event = || println!("test kaon event!");
+        // Kaon::handler(test_event, &test_context).await;
     }
 
     #[tokio::test]
