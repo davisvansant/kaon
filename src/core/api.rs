@@ -54,13 +54,10 @@ impl Api {
     pub async fn runtime_next_invocation(&self) -> Result<Response<Body>, hyper::Error> {
         let path = "/runtime/invocation/next";
         let uri = Self::build_uri(&self.runtime_api, path).await;
-        // let response = &self.client.get(uri).await;
         let response = self.client.get(uri).await;
 
         match response {
             Ok(event) => {
-                // println!("{:?}", event.body());
-                // println!("{:?}", event.headers());
                 info!("| kaon api | Event received!");
                 Ok(event)
             }
@@ -83,15 +80,12 @@ impl Api {
         let request = Request::builder()
             .method("POST")
             .uri(uri)
-            // .body(Body::from("hi"))
             .body(response)
             .unwrap();
         let response = &self.client.request(request).await;
 
         match &response {
             Ok(event) => {
-                // println!("{:?}", event.body());
-                // println!("{:?}", event.headers());
                 info!("| kaon api | response {:?}", event.status());
             }
             Err(error) => error!("| kaon api | {:?}", error),
@@ -111,15 +105,12 @@ impl Api {
             .method("POST")
             .header("Lambda-Runtime-Function-Error-Type", "Unhandled")
             .uri(uri)
-            // .body(Body::from("some error"))
             .body(error)
             .unwrap();
         let response = &self.client.request(request).await;
 
         match &response {
             Ok(event) => {
-                // println!("{:?}", event.body());
-                // println!("{:?}", event.headers());
                 info!("| kaon api | error sent {:?}", event.status());
             }
             Err(error) => error!("| kaon api | {:?}", error),
@@ -138,15 +129,12 @@ impl Api {
             .method("POST")
             .header("Lambda-Runtime-Function-Error-Type", "Unhandled")
             .uri(uri)
-            // .body(Body::from("some error"))
             .body(error)
             .unwrap();
         let response = &self.client.request(request).await;
 
         match &response {
             Ok(event) => {
-                // println!("{:?}", event.body());
-                // println!("{:?}", event.headers());
                 info!("| kaon api | error sent {:?}", event.status())
             }
             Err(error) => error!("| kaon api | {:?}", error),

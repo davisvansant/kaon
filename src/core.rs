@@ -139,71 +139,6 @@ impl Kaon {
 
         // info!("| kaon decay | Kaon decay is in process ...");
 
-        // if self.in_flight {
-        //     loop {
-        //         let event = self.api.runtime_next_invocation().await;
-        //
-        //         // match event {
-        //         //     Ok(event_response) => {
-        //         //         let headers = event_response.headers();
-        //         //         Api::set_tracing_header(headers).await;
-        //         //         let id = &headers.get("Lambda-Runtime-Aws-Request-Id").unwrap();
-        //         //         let arn = &headers.get("Lambda-Runtime-Invoked-Function-Arn").unwrap();
-        //         //         let identity = &headers.get("Lambda-Runtime-Cognito-Identity").unwrap();
-        //         //         let client = &headers.get("Lambda-Runtime-Client-Context").unwrap();
-        //         //         let context = Context::create(
-        //         //             id.to_str().unwrap().to_string(),
-        //         //             arn.to_str().unwrap().to_string(),
-        //         //             identity.to_str().unwrap().to_string(),
-        //         //             client.to_str().unwrap().to_string(),
-        //         //         )
-        //         //         .await;
-        //         //         let invoke_handler =
-        //         //             Self::handler(function, event_response.into_body(), context.clone())
-        //         //                 .await;
-        //         //         let fake_body = Body::from("more to come...");
-        //         //         let handle_response = self
-        //         //             .api
-        //         //             .runtime_invocation_response(context.aws_request_id.as_str(), fake_body)
-        //         //             .await;
-        //         //     }
-        //         //     Err(_) => {}
-        //         if let Ok(event_response) = event {
-        //             let headers = event_response.headers();
-        //             Api::set_tracing_header(headers).await;
-        //             let id = &headers.get("Lambda-Runtime-Aws-Request-Id").unwrap();
-        //             let arn = &headers.get("Lambda-Runtime-Invoked-Function-Arn").unwrap();
-        //             let identity = &headers.get("Lambda-Runtime-Cognito-Identity").unwrap();
-        //             let client = &headers.get("Lambda-Runtime-Client-Context").unwrap();
-        //             let context = Context::create(
-        //                 id.to_str().unwrap().to_string(),
-        //                 arn.to_str().unwrap().to_string(),
-        //                 identity.to_str().unwrap().to_string(),
-        //                 client.to_str().unwrap().to_string(),
-        //             )
-        //             .await;
-        //             // Self::handler(function, event_response.into_body(), context.clone()).await;
-        //             let fake_body = Body::from("more to come...");
-        //             let handle_response = self
-        //                 .api
-        //                 .runtime_invocation_response(context.aws_request_id.as_str(), fake_body)
-        //                 .await;
-        //             if handle_response.is_ok() {
-        //                 println!("event processed!");
-        //                 // continue;
-        //                 self.stop();
-        //             } else {
-        //                 println!("there was an error, shutting down");
-        //                 // break;
-        //                 self.stop();
-        //             }
-        //         } else {
-        //             println!("there was an error, shutting down");
-        //             // break;
-        //             self.stop();
-        //         }
-        //     }
-        // }
         while self.in_flight {
             let event = self.api.runtime_next_invocation().await;
 
@@ -463,21 +398,16 @@ mod tests {
         .match_body("more to come...")
         .expect(1)
         .create();
-        // let test_event = |_, _| println!("test kaon event!");
-        // let test_event = |test_body, test_context| {
-        //     println!("test kaon event!");
-        // };
+
         fn test_event(test_body: Body, test_context: Context) {
             println!("kaon test {:?}", test_body);
             println!("kaon test {}", test_context.aws_request_id);
         }
-        // let tester = || test_event(test_body, test_context);
-        // let tester = || println!("test kaon");
+
         let mut kaon = Kaon::charge().await;
         assert_eq!(kaon.in_flight, false);
-        // kaon.decay(test_event(test_body, test_context)).await;
+
         kaon.decay(test_event).await;
-        // assert_eq!(kaon.in_flight, true);
         mock.assert();
         assert!(mock.matched());
         mock_post.assert();
