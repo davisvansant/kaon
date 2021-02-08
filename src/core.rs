@@ -104,9 +104,9 @@ impl Kaon {
     //     info!("| kaon handler | Kaon is invoking function!");
     //     f();
     // }
-    async fn handler<Handler: Fn(Body, Context)>(handle: Handler, event: Body, context: Context) {
-        handle(event, context);
-    }
+    // async fn handler<Handler: Fn(Body, Context)>(handle: Handler, event: Body, context: Context) {
+    //     handle(event, context);
+    // }
 
     #[instrument]
     pub async fn charge() -> Kaon {
@@ -132,7 +132,7 @@ impl Kaon {
     //     &mut self,
     //     function: Handler,
     // ) {
-    pub async fn decay<E, C>(&mut self, function: fn(E, C)) {
+    pub async fn decay<E, C>(&mut self, _function: fn(E, C)) {
         self.in_flight = true;
 
         println!("{:?}", self.in_flight);
@@ -314,26 +314,26 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn handler() {
-        // test currently does nothing
-        let test_aws_request_id = String::from("8476a536-e9f4-11e8-9739-2dfe598c3fcd");
-        let test_arn =
-            String::from("arn:aws:lambda:us-east-2:123456789012:function:custom-runtime");
-        let test_identity = String::from("test_identity");
-        let test_client_context = String::from("test_client_context");
-
-        let test_context = Context::create(
-            test_aws_request_id,
-            test_arn,
-            test_identity,
-            test_client_context,
-        )
-        .await;
-        let test_event = |_, _| println!("test kaon event!");
-        let test_body = Body::from("test");
-        Kaon::handler(test_event, test_body, test_context).await;
-    }
+    // #[tokio::test]
+    // async fn handler() {
+    //     // test currently does nothing
+    //     let test_aws_request_id = String::from("8476a536-e9f4-11e8-9739-2dfe598c3fcd");
+    //     let test_arn =
+    //         String::from("arn:aws:lambda:us-east-2:123456789012:function:custom-runtime");
+    //     let test_identity = String::from("test_identity");
+    //     let test_client_context = String::from("test_client_context");
+    //
+    //     let test_context = Context::create(
+    //         test_aws_request_id,
+    //         test_arn,
+    //         test_identity,
+    //         test_client_context,
+    //     )
+    //     .await;
+    //     let test_event = |_, _| println!("test kaon event!");
+    //     let test_body = Body::from("test");
+    //     Kaon::handler(test_event, test_body, test_context).await;
+    // }
 
     #[tokio::test]
     async fn charge() {
