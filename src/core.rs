@@ -5,9 +5,11 @@ use tracing::{info, instrument, warn};
 
 mod api;
 mod context;
+mod handler;
 
 use crate::core::api::Api;
 use crate::core::context::Context;
+use crate::core::handler::handler;
 
 #[derive(Debug)]
 pub struct Kaon {
