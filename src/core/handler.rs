@@ -1,14 +1,20 @@
 use crate::core::Context;
+use std::future::Future;
 use std::io::{Error, ErrorKind};
 
-pub fn handler<E, C, R, Handler: Fn(E, C) -> Result<R, std::io::Error>>(
+pub async fn handler<E, R, Outatime, Handler: Fn(E, Context) -> Outatime>(
     handle: Handler,
     event: E,
-    context: C,
-) -> Result<R, std::io::Error> {
-    let event_result = handle(event, context);
+    context: Context,
+) -> Result<R, std::io::Error>
+where
+    Handler: Fn(E, Context) -> Outatime,
+    Outatime: Future<Output = Result<R, std::io::Error>>,
+{
+    let event_result = handle(event, context).await;
+
     match event_result {
-        Ok(something) => Ok(something),
+        Ok(result) => Ok(result),
         Err(error) => Err(Error::new(ErrorKind::Other, error)),
     }
 }
@@ -45,7 +51,7 @@ mod tests {
         )
         .await;
 
-        fn test_handler_function(
+        async fn test_handler_function(
             event: TestRequest,
             context: Context,
         ) -> Result<TestResponse, std::io::Error> {
@@ -56,7 +62,7 @@ mod tests {
             Ok(response)
         }
 
-        let result = handler(test_handler_function, test_request, test_context);
+        let result = handler(test_handler_function, test_request, test_context).await;
 
         if let Ok(test_kaon_result) = result {
             assert_eq!(test_kaon_result.test_response, String::from("hello"));
