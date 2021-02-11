@@ -2,6 +2,7 @@ use crate::core::Context;
 use std::future::Future;
 use std::io::{Error, ErrorKind};
 
+#[derive(Debug)]
 pub struct EventHandler<EventFunction> {
     function: EventFunction,
 }
