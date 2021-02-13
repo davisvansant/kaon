@@ -1,6 +1,6 @@
 use crate::core::Context;
 use std::future::Future;
-// use std::io::{Error, ErrorKind};
+use std::io::{Error, ErrorKind};
 
 #[derive(Debug)]
 pub struct EventHandler<EventFunction> {
@@ -16,6 +16,19 @@ impl<EventFunction> EventHandler<EventFunction> {
         Outatime: Future<Output = Result<EventResponse, std::io::Error>>,
     {
         EventHandler { function }
+    }
+
+    pub async fn run<E, R, Outatime>(&self, event: E, context: Context) -> Result<R, std::io::Error>
+    where
+        EventFunction: Fn(E, Context) -> Outatime,
+        Outatime: Future<Output = Result<R, std::io::Error>>,
+    {
+        let event_result = (self.function)(event, context).await;
+
+        match event_result {
+            Ok(result) => Ok(result),
+            Err(error) => Err(Error::new(ErrorKind::Other, error)),
+        }
     }
 }
 // pub async fn handler<E, R, Outatime, Handler: Fn(E, Context) -> Outatime>(
@@ -79,7 +92,8 @@ mod tests {
         }
 
         let event_handler = EventHandler::init(test_handler_function).await;
-        let test_result = (event_handler.function)(test_request, test_context).await;
+        // let test_result = (event_handler.function)(test_request, test_context).await;
+        let test_result = event_handler.run(test_request, test_context).await;
         if let Ok(event_result) = test_result {
             assert_eq!(event_result.test_response, String::from("hello"));
             assert_eq!(
