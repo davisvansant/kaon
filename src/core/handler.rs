@@ -18,10 +18,14 @@ impl<EventFunction> EventHandler<EventFunction> {
         EventHandler { function }
     }
 
-    pub async fn run<E, R, Outatime>(&self, event: E, context: Context) -> Result<R, std::io::Error>
+    pub async fn run<EventRequest, EventResponse, Outatime>(
+        &self,
+        event: EventRequest,
+        context: Context,
+    ) -> Result<EventResponse, std::io::Error>
     where
-        EventFunction: Fn(E, Context) -> Outatime,
-        Outatime: Future<Output = Result<R, std::io::Error>>,
+        EventFunction: Fn(EventRequest, Context) -> Outatime,
+        Outatime: Future<Output = Result<EventResponse, std::io::Error>>,
     {
         let event_result = (self.function)(event, context).await;
 
