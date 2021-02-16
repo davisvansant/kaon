@@ -11,6 +11,16 @@ version = "0.14.4"
 default_features = false
 features = [ "client", "http1", "tcp" ]
 
+[dependencies.serde]
+version = "1.0.123"
+default_features = false
+features = []
+
+[dependencies.serde_json]
+version = "1.0.62" 
+default_features = false
+features = []
+
 [dependencies.tracing]
 version = "0.1.23"
 default_features = false
