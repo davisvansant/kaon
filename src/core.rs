@@ -1,6 +1,7 @@
 use hyper::body::Body;
 use hyper::client::Client;
 // use std::ffi::OsString;
+use serde::Deserialize;
 use std::future::Future;
 use tracing::{info, instrument, warn};
 
@@ -11,20 +12,18 @@ mod initialization_tasks;
 
 use crate::core::api::Api;
 use crate::core::context::Context;
-// use crate::core::handler::handler;
 use crate::core::handler::EventHandler;
 use crate::core::initialization_tasks::retrieve_settings;
 
 #[derive(Debug)]
-pub struct Kaon<T> {
+pub struct Kaon {
     pub in_flight: bool,
     pub environment: std::env::VarsOs,
     pub api: Api,
-    pub handler: EventHandler<T>,
     pub processed: Vec<Context>,
 }
 
-impl<T> Kaon<T> {
+impl Kaon {
     // #[instrument]
     async fn collect_event(&mut self, new_event: Context) {
         let event = self.processed.last();
@@ -43,33 +42,29 @@ impl<T> Kaon<T> {
     }
 
     // #[instrument]
-    pub async fn charge<B, C, D>(function: T) -> Kaon<T>
-    where
-        T: Fn(B, Context) -> D,
-        D: Future<Output = Result<C, std::io::Error>>,
-    {
+    pub async fn charge() -> Kaon {
         let api = Api {
             client: Client::new(),
             runtime_api: retrieve_settings().await,
         };
 
-        let handler = EventHandler::init(function).await;
-
-        // info!("| kaon charge | Kaon is charged!");
-
-        Kaon {
+        Self {
             in_flight: false,
             environment: std::env::vars_os(),
             api,
-            handler,
             processed: Vec::with_capacity(20),
         }
     }
 
-    pub async fn decay<E, C>(&mut self, _function: fn(E, C)) {
+    pub async fn decay<F, B, C, D>(&mut self, function: F)
+    where
+        B: for<'de> Deserialize<'de> + Copy,
+        F: Fn(B, Context) -> D,
+        D: Future<Output = Result<C, std::io::Error>>,
+    {
         self.in_flight = true;
 
-        println!("{:?}", self.in_flight);
+        let handler = EventHandler::init(function).await;
 
         // info!("| kaon decay | Kaon decay is in process ...");
 
@@ -92,9 +87,15 @@ impl<T> Kaon<T> {
                 .await;
                 self.collect_event(context.clone()).await;
                 // checkpoint to see if we want to continue processing
+                let cloned_body = event_response.into_body();
+                let response_body = hyper::body::to_bytes(cloned_body).await.unwrap();
+                let response_json = serde_json::from_slice(&response_body).unwrap();
                 while self.in_flight {
                     let fake_body = Body::from("more to come...");
-                    // handler(function, event_response.into_body(), context.clone()).await;
+                    let handler_result = handler.run(response_json, context.clone()).await;
+                    if let Ok(some_result) = handler_result {
+                        some_result;
+                    };
                     let handle_response = self
                         .api
                         .runtime_invocation_response(context.aws_request_id.as_str(), fake_body)
@@ -153,17 +154,17 @@ mod tests {
         // )
         // .await;
 
-        async fn test_handler_function(
-            event: TestRequest,
-            context: Context,
-        ) -> Result<TestResponse, std::io::Error> {
-            let response = TestResponse {
-                test_response: event.test_request,
-                test_context: context,
-            };
-            Ok(response)
-        }
-        let kaon = Kaon::charge(test_handler_function).await;
+        // async fn test_handler_function(
+        //     event: TestRequest,
+        //     context: Context,
+        // ) -> Result<TestResponse, std::io::Error> {
+        //     let response = TestResponse {
+        //         test_response: event.test_request,
+        //         test_context: context,
+        //     };
+        //     Ok(response)
+        // }
+        let kaon = Kaon::charge().await;
         assert_eq!(kaon.in_flight, false);
         for (k, v) in kaon.environment {
             assert_eq!(std::env::var_os(k), Some(v));
