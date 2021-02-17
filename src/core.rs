@@ -1,7 +1,7 @@
 use hyper::body::Body;
 use hyper::client::Client;
 // use std::ffi::OsString;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::future::Future;
 use tracing::{info, instrument, warn};
 
@@ -59,8 +59,9 @@ impl Kaon {
     pub async fn decay<F, B, C, D>(&mut self, function: F)
     where
         B: for<'de> Deserialize<'de> + Copy,
+        C: Serialize + Copy,
         F: Fn(B, Context) -> D,
-        D: Future<Output = Result<C, std::io::Error>>,
+        D: Future<Output = Result<C, ()>> + Serialize,
     {
         self.in_flight = true;
 
@@ -91,22 +92,44 @@ impl Kaon {
                 let response_body = hyper::body::to_bytes(cloned_body).await.unwrap();
                 let response_json = serde_json::from_slice(&response_body).unwrap();
                 while self.in_flight {
-                    let fake_body = Body::from("more to come...");
+                    // let fake_body = Body::from("more to come...");
                     let handler_result = handler.run(response_json, context.clone()).await;
-                    if let Ok(some_result) = handler_result {
-                        some_result;
+                    match handler_result {
+                        Ok(result) => {
+                            let handler_json_response = serde_json::to_vec(&result).unwrap();
+                            let response_body = Body::from(handler_json_response);
+                            let handle_response = self
+                                .api
+                                .runtime_invocation_response(
+                                    context.aws_request_id.as_str(),
+                                    response_body,
+                                )
+                                .await;
+                            if handle_response.is_ok() {
+                                println!("event processed!");
+                                break;
+                            } else {
+                                println!("handle response was not ok");
+                                self.stop();
+                            }
+                        }
+                        Err(_) => panic!("better error goes here"),
                     };
-                    let handle_response = self
-                        .api
-                        .runtime_invocation_response(context.aws_request_id.as_str(), fake_body)
-                        .await;
-                    if handle_response.is_ok() {
-                        println!("event processed!");
-                        break;
-                    } else {
-                        println!("handle response was not ok");
-                        self.stop();
-                    }
+                    // let handler_json_response = serde_json::to_vec(&handler_result).unwrap();
+                    // let handle_response = self
+                    //     .api
+                    //     .runtime_invocation_response(
+                    //         context.aws_request_id.as_str(),
+                    //         handler_json_response,
+                    //     )
+                    //     .await;
+                    // if handle_response.is_ok() {
+                    //     println!("event processed!");
+                    //     break;
+                    // } else {
+                    //     println!("handle response was not ok");
+                    //     self.stop();
+                    // }
                 }
             } else {
                 println!("error connecting to api");
@@ -127,14 +150,14 @@ mod tests {
     #[tokio::test]
     async fn charge() {
         std::env::set_var("AWS_LAMBDA_RUNTIME_API", "test_aws_lambda_runtime_api");
-        struct TestRequest {
-            test_request: String,
-        }
-
-        struct TestResponse {
-            pub test_response: String,
-            pub test_context: Context,
-        }
+        // struct TestRequest {
+        //     test_request: String,
+        // }
+        //
+        // struct TestResponse {
+        //     pub test_response: String,
+        //     pub test_context: Context,
+        // }
 
         // let test_request = TestRequest {
         //     test_request: String::from("hello"),
