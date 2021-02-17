@@ -1,6 +1,7 @@
 use crate::core::Context;
+// use serde::{Deserialize, Serialize};
 use std::future::Future;
-use std::io::{Error, ErrorKind};
+// use std::io::{Error, ErrorKind};
 
 #[derive(Debug)]
 pub struct EventHandler<EventFunction> {
@@ -13,7 +14,8 @@ impl<EventFunction> EventHandler<EventFunction> {
     ) -> EventHandler<EventFunction>
     where
         EventFunction: Fn(EventRequest, Context) -> Outatime,
-        Outatime: Future<Output = Result<EventResponse, std::io::Error>>,
+        // Outatime: Future<Output = Result<EventResponse, std::error::Error>>,
+        Outatime: Future<Output = Result<EventResponse, ()>>,
     {
         EventHandler { function }
     }
@@ -22,16 +24,22 @@ impl<EventFunction> EventHandler<EventFunction> {
         &self,
         event: EventRequest,
         context: Context,
-    ) -> Result<EventResponse, std::io::Error>
+        // ) -> Result<EventResponse, std::error::Error>
+    ) -> Result<EventResponse, ()>
     where
         EventFunction: Fn(EventRequest, Context) -> Outatime,
-        Outatime: Future<Output = Result<EventResponse, std::io::Error>>,
+        // Outatime: Future<Output = Result<EventResponse, std::error::Error>>,
+        Outatime: Future<Output = Result<EventResponse, ()>>,
     {
         let event_result = (self.function)(event, context).await;
 
         match event_result {
             Ok(result) => Ok(result),
-            Err(error) => Err(Error::new(ErrorKind::Other, error)),
+            // Err(error) => Err(Error::new(ErrorKind::Other, error)),
+            Err(error) => {
+                println!("{:?}", error);
+                Err(())
+            }
         }
     }
 }
@@ -87,7 +95,7 @@ mod tests {
         async fn test_handler_function(
             event: TestRequest,
             context: Context,
-        ) -> Result<TestResponse, std::io::Error> {
+        ) -> Result<TestResponse, ()> {
             let response = TestResponse {
                 test_response: event.test_request,
                 test_context: context,
