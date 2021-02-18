@@ -1,7 +1,9 @@
 use hyper::body::Body;
 use hyper::client::Client;
 // use std::ffi::OsString;
-use serde::{Deserialize, Serialize};
+use serde::de::DeserializeOwned;
+// use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::future::Future;
 use tracing::{info, instrument, warn};
 
@@ -58,7 +60,8 @@ impl Kaon {
 
     pub async fn decay<F, B, C, D>(&mut self, function: F)
     where
-        B: for<'de> Deserialize<'de>,
+        // B: for<'de> Deserialize<'de>,
+        B: DeserializeOwned,
         C: Serialize,
         F: Fn(B, Context) -> D,
         D: Future<Output = Result<C, ()>>,
@@ -149,6 +152,7 @@ impl Kaon {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::{Deserialize, Serialize};
     // #[tokio::test]
     // async fn charge() {
     //     std::env::set_var("AWS_LAMBDA_RUNTIME_API", "test_aws_lambda_runtime_api");
