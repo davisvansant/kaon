@@ -12,12 +12,12 @@ default_features = false
 features = [ "client", "http1", "tcp" ]
 
 [dependencies.serde]
-version = "1.0.123"
+version = "1.0.121"
 default_features = false
-features = []
+features = [ "derive" ]
 
 [dependencies.serde_json]
-version = "1.0.62" 
+version = "1.0.62"
 default_features = false
 features = []
 
