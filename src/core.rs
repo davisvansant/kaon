@@ -27,6 +27,21 @@ pub struct Kaon {
 
 impl Kaon {
     // #[instrument]
+    pub async fn charge() -> Kaon {
+        let api = Api {
+            client: Client::new(),
+            runtime_api: retrieve_settings().await,
+        };
+
+        Self {
+            in_flight: false,
+            environment: std::env::vars_os(),
+            api,
+            processed: Vec::with_capacity(20),
+        }
+    }
+
+    // #[instrument]
     async fn collect_event(&mut self, new_event: Context) {
         let event = self.processed.last();
         if let Some(last_event) = event {
@@ -40,21 +55,6 @@ impl Kaon {
         } else {
             self.processed.push(new_event);
             info!("| kaon collect event | event processed!");
-        }
-    }
-
-    // #[instrument]
-    pub async fn charge() -> Kaon {
-        let api = Api {
-            client: Client::new(),
-            runtime_api: retrieve_settings().await,
-        };
-
-        Self {
-            in_flight: false,
-            environment: std::env::vars_os(),
-            api,
-            processed: Vec::with_capacity(20),
         }
     }
 
