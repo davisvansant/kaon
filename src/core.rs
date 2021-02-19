@@ -78,17 +78,15 @@ impl Kaon {
             if let Ok(event_response) = event {
                 let headers = event_response.headers();
                 Api::set_tracing_header(headers).await;
-                let id = &headers.get("Lambda-Runtime-Aws-Request-Id").unwrap();
-                let arn = &headers.get("Lambda-Runtime-Invoked-Function-Arn").unwrap();
-                let identity = &headers.get("Lambda-Runtime-Cognito-Identity").unwrap();
-                let client = &headers.get("Lambda-Runtime-Client-Context").unwrap();
-                let context = Context::create(
-                    id.to_str().unwrap().to_string(),
-                    arn.to_str().unwrap().to_string(),
-                    identity.to_str().unwrap().to_string(),
-                    client.to_str().unwrap().to_string(),
-                )
-                .await;
+                // let id = &headers.get("Lambda-Runtime-Aws-Request-Id").unwrap();
+                let id = Api::get_header(&headers, "Lambda-Runtime-Aws-Request-Id").await;
+                // let arn = &headers.get("Lambda-Runtime-Invoked-Function-Arn").unwrap();
+                let arn = Api::get_header(&headers, "Lambda-Runtime-Invoked-Function-Arn").await;
+                // let identity = &headers.get("Lambda-Runtime-Cognito-Identity").unwrap();
+                let identity = Api::get_header(&headers, "Lambda-Runtime-Cognito-Identity").await;
+                // let client = &headers.get("Lambda-Runtime-Client-Context").unwrap();
+                let client = Api::get_header(&headers, "Lambda-Runtime-Client-Context").await;
+                let context = Context::create(id, arn, identity, client).await;
                 self.collect_event(context.clone()).await;
                 // checkpoint to see if we want to continue processing
                 let response_body = event_response.into_body();
