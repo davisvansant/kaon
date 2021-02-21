@@ -55,11 +55,6 @@ impl Api {
     pub async fn set_tracing_header(header: &HeaderMap<HeaderValue>) {
         if header.contains_key("Lambda-Runtime-Trace-Id") {
             let x_amzn_trace_id = OsString::from("_X_AMZN_TRACE_ID");
-            // let value = &header
-            //     .get("Lambda-Runtime-Trace-Id")
-            //     .unwrap()
-            //     .to_str()
-            //     .unwrap();
             let value = Api::get_header(header, "Lambda-Runtime-Trace-Id").await;
             std::env::set_var(x_amzn_trace_id, OsString::from(&value));
         }
@@ -82,7 +77,6 @@ impl Api {
                 Err(error)
             }
         }
-        // Ok(())
     }
 
     #[instrument]
