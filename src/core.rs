@@ -58,12 +58,14 @@ impl Kaon {
         }
     }
 
-    pub async fn decay<F, B, C, D>(&mut self, function: F)
-    where
-        B: DeserializeOwned,
-        C: Serialize,
-        F: Fn(B, Context) -> D,
-        D: Future<Output = Result<C, ()>>,
+    pub async fn decay<EventFunction, EventRequest, EventResponse, Outatime>(
+        &mut self,
+        function: EventFunction,
+    ) where
+        EventRequest: DeserializeOwned,
+        EventResponse: Serialize,
+        EventFunction: Fn(EventRequest, Context) -> Outatime,
+        Outatime: Future<Output = Result<EventResponse, ()>>,
     {
         self.in_flight = true;
 
@@ -89,7 +91,8 @@ impl Kaon {
                     hyper::body::to_bytes(response_body).await.unwrap().to_vec();
 
                 while self.in_flight {
-                    let response_json: B = serde_json::from_slice(&response_body_bytes).unwrap();
+                    let response_json: EventRequest =
+                        serde_json::from_slice(&response_body_bytes).unwrap();
                     let handler_result = handler.run(response_json, context.clone()).await;
                     match handler_result {
                         Ok(result) => {
