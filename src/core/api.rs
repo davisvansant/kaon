@@ -1,4 +1,5 @@
 use hyper::body::Body;
+use hyper::body::Bytes;
 use hyper::client::connect::HttpConnector;
 use hyper::client::Client;
 use hyper::header::HeaderValue;
@@ -32,6 +33,21 @@ impl Api {
             Err(error) => {
                 error!("| kaon uri | {}", error);
                 panic!("cannot build uri");
+            }
+        }
+    }
+
+    #[instrument]
+    pub async fn body_to_bytes(body: Body) -> Bytes {
+        let body_bytes = hyper::body::to_bytes(body).await;
+        match body_bytes {
+            Ok(bytes) => {
+                info!("| kaon uri | Body converted to bytes");
+                bytes
+            }
+            Err(error) => {
+                error!("| kaon uri | {}", error);
+                panic!("cannot collect body bytes");
             }
         }
     }
@@ -166,6 +182,16 @@ mod tests {
         assert_eq!(uri.host(), Some("test_aws_lambda_runtime_api"));
         assert_eq!(uri.path(), "/2018-06-01/runtime/invocation/next");
         Ok(())
+    }
+
+    #[tokio::test]
+    async fn body_to_bytes() {
+        use std::str::FromStr;
+        let test_body = Body::from("test");
+        let test_body_bytes = Api::body_to_bytes(test_body).await;
+        let test_bytes = Bytes::from_static(b"test");
+        assert_eq!(test_body_bytes.len(), 4);
+        assert_eq!(test_body_bytes.contains(test_bytes.first().unwrap()), true);
     }
 
     #[tokio::test]
