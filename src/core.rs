@@ -87,8 +87,9 @@ impl Kaon {
                 self.collect_event(context.clone()).await;
                 // checkpoint to see if we want to continue processing
                 let response_body = event_response.into_body();
-                let response_body_bytes =
-                    hyper::body::to_bytes(response_body).await.unwrap().to_vec();
+                // let response_body_bytes =
+                //     hyper::body::to_bytes(response_body).await.unwrap().to_vec();
+                let response_body_bytes = Api::body_to_bytes(response_body).await;
 
                 while self.in_flight {
                     let response_json: EventRequest =
