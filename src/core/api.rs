@@ -186,7 +186,6 @@ mod tests {
 
     #[tokio::test]
     async fn body_to_bytes() {
-        use std::str::FromStr;
         let test_body = Body::from("test");
         let test_body_bytes = Api::body_to_bytes(test_body).await;
         let test_bytes = Bytes::from_static(b"test");
