@@ -13,7 +13,7 @@ mod handler;
 mod initialization_tasks;
 
 use crate::core::api::Api;
-use crate::core::context::Context;
+pub use crate::core::context::Context;
 use crate::core::handler::EventHandler;
 use crate::core::initialization_tasks::retrieve_settings;
 
