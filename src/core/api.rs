@@ -63,7 +63,8 @@ impl Api {
                     Err(invalid_header_value) => panic!("{}", invalid_header_value),
                 }
             }
-            None => panic!("{} is not found in response", key),
+            // None => panic!("{} is not found in response", key),
+            None => key.to_string(),
         }
     }
 
