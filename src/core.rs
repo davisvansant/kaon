@@ -114,7 +114,17 @@ impl Kaon {
                                 self.stop();
                             }
                         }
-                        Err(_) => panic!("better error goes here"),
+                        // Err(_) => panic!("better error goes here"),
+                        Err(error) => {
+                            let handler_json_error = serde_json::to_vec(&error).unwrap();
+                            let error_body = Body::from(handler_json_error);
+                            self.api
+                                .runtime_invocation_error(
+                                    context.aws_request_id.as_str(),
+                                    error_body,
+                                )
+                                .await;
+                        }
                     };
                 }
             } else {
