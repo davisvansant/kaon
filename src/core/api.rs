@@ -121,11 +121,7 @@ impl Api {
     }
 
     #[instrument]
-    pub async fn runtime_invocation_error(
-        &self,
-        request_id: &str,
-        error: Body,
-    ) -> Result<(), hyper::http::Error> {
+    pub async fn runtime_invocation_error(&self, request_id: &str, error: Body) {
         let path = format!("/runtime/invocation/{}/error", request_id);
         let uri = Self::build_uri(&self.runtime_api, &path).await;
         let request = Request::builder()
@@ -142,7 +138,6 @@ impl Api {
             }
             Err(error) => error!("| kaon api | {:?}", error),
         }
-        Ok(())
     }
 
     #[instrument]
@@ -359,7 +354,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn runtime_invocation_error() -> Result<(), hyper::http::Error> {
+    async fn runtime_invocation_error() {
         let test_api = Api {
             client: Client::new(),
             runtime_api: mockito::server_address().to_string(),
@@ -376,10 +371,9 @@ mod tests {
             r#"{"errorMessage": "test_kaon_error_message", "errorType": "test_kaon_error_type"}"#,
         )
         .create();
-        Api::runtime_invocation_error(&test_api, &test_request_id, test_error).await?;
+        Api::runtime_invocation_error(&test_api, &test_request_id, test_error).await;
         mock.assert();
         assert!(mock.matched());
-        Ok(())
     }
 
     #[tokio::test]
