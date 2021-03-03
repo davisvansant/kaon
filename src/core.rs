@@ -128,6 +128,7 @@ impl Kaon {
                                             error_body,
                                         )
                                         .await;
+                                    break;
                                 }
                             }
                         }
@@ -142,6 +143,7 @@ impl Kaon {
                                     error_body,
                                 )
                                 .await;
+                            break;
                         }
                     }
                 }
