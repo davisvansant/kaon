@@ -92,32 +92,50 @@ impl Kaon {
                 let response_body_bytes = Api::body_to_bytes(response_body).await;
 
                 while self.in_flight {
-                    let response_json: EventRequest =
-                        serde_json::from_slice(&response_body_bytes).unwrap();
-                    let handler_result = handler.run(response_json, context.clone()).await;
-                    match handler_result {
-                        Ok(result) => {
-                            let handler_json_response = serde_json::to_vec(&result).unwrap();
-                            let response_body = Body::from(handler_json_response);
-                            let handle_response = self
-                                .api
-                                .runtime_invocation_response(
-                                    context.aws_request_id.as_str(),
-                                    response_body,
-                                )
-                                .await;
-                            if handle_response.is_ok() {
-                                println!("event processed!");
-                                break;
-                            } else {
-                                println!("handle response was not ok");
-                                self.stop();
+                    // let response_json: EventRequest =
+                    //     serde_json::from_slice(&response_body_bytes).unwrap();
+                    let response_json = serde_json::from_slice(&response_body_bytes);
+                    match response_json {
+                        Ok(json) => {
+                            let handler_result = handler.run(json, context.clone()).await;
+                            match handler_result {
+                                Ok(result) => {
+                                    let handler_json_response =
+                                        serde_json::to_vec(&result).unwrap();
+                                    let response_body = Body::from(handler_json_response);
+                                    let handle_response = self
+                                        .api
+                                        .runtime_invocation_response(
+                                            context.aws_request_id.as_str(),
+                                            response_body,
+                                        )
+                                        .await;
+                                    if handle_response.is_ok() {
+                                        println!("event processed!");
+                                        break;
+                                    } else {
+                                        println!("handle response was not ok");
+                                        self.stop();
+                                    }
+                                }
+                                // Err(_) => panic!("better error goes here"),
+                                Err(error) => {
+                                    let handler_json_error = serde_json::to_vec(&error).unwrap();
+                                    let error_body = Body::from(handler_json_error);
+                                    self.api
+                                        .runtime_invocation_error(
+                                            context.aws_request_id.as_str(),
+                                            error_body,
+                                        )
+                                        .await;
+                                }
                             }
                         }
-                        // Err(_) => panic!("better error goes here"),
                         Err(error) => {
-                            let handler_json_error = serde_json::to_vec(&error).unwrap();
-                            let error_body = Body::from(handler_json_error);
+                            let response_json_error =
+                                serde_json::to_vec(&error.to_string()).unwrap();
+                            let error_body = Body::from(response_json_error);
+
                             self.api
                                 .runtime_invocation_error(
                                     context.aws_request_id.as_str(),
@@ -125,7 +143,7 @@ impl Kaon {
                                 )
                                 .await;
                         }
-                    };
+                    }
                 }
             } else {
                 println!("error connecting to api");
