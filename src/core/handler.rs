@@ -32,7 +32,9 @@ impl<EventFunction> EventHandler<EventFunction> {
         match event_result {
             Ok(result) => Ok(result),
             Err(error) => {
-                println!("{:?}", error);
+                let json_error = serde_json::to_string(&error).unwrap();
+                // println!("{:?}", error);
+                println!("{:?}", json_error);
                 Err(())
             }
         }
