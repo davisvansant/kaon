@@ -9,11 +9,13 @@ use tracing::{info, instrument, warn};
 
 mod api;
 pub mod context;
+mod error;
 mod handler;
 mod initialization_tasks;
 
 use crate::core::api::Api;
 use crate::core::context::Context;
+use crate::core::error::ErrorRequest;
 use crate::core::handler::EventHandler;
 use crate::core::initialization_tasks::retrieve_settings;
 
@@ -133,8 +135,8 @@ impl Kaon {
                             }
                         }
                         Err(error) => {
-                            let response_json_error =
-                                serde_json::to_vec(&error.to_string()).unwrap();
+                            let collected_error = ErrorRequest::collect(error.to_string()).await;
+                            let response_json_error = serde_json::to_vec(&collected_error).unwrap();
                             let error_body = Body::from(response_json_error);
 
                             self.api
