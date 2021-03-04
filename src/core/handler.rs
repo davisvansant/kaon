@@ -34,7 +34,7 @@ impl<EventFunction> EventHandler<EventFunction> {
             Err(error) => {
                 let json_error = serde_json::to_string(&error).unwrap();
                 // println!("{:?}", error);
-                println!("{:?}", json_error);
+                println!("error encountered - {:?}", json_error);
                 Err(())
             }
         }
