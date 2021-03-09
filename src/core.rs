@@ -1,8 +1,6 @@
 use hyper::body::Body;
 use hyper::client::Client;
-// use std::ffi::OsString;
 use serde::de::DeserializeOwned;
-// use serde::{Deserialize, Serialize};
 use serde::Serialize;
 use std::future::Future;
 use tracing::{info, instrument, warn};
@@ -94,12 +92,12 @@ impl Kaon {
                 let response_body_bytes = Api::body_to_bytes(response_body).await;
 
                 while self.in_flight {
-                    // let response_json: EventRequest =
-                    //     serde_json::from_slice(&response_body_bytes).unwrap();
                     let response_json = serde_json::from_slice(&response_body_bytes);
+
                     match response_json {
                         Ok(json) => {
                             let handler_result = handler.run(json, context.clone()).await;
+
                             match handler_result {
                                 Ok(result) => {
                                     let handler_json_response =
@@ -120,7 +118,6 @@ impl Kaon {
                                         self.stop();
                                     }
                                 }
-                                // Err(_) => panic!("better error goes here"),
                                 Err(error) => {
                                     let handler_json_error = serde_json::to_vec(&error).unwrap();
                                     let error_body = Body::from(handler_json_error);

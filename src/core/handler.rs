@@ -1,5 +1,4 @@
 use crate::core::Context;
-// use serde::{Deserialize, Serialize};
 use std::future::Future;
 
 #[derive(Debug)]
@@ -33,7 +32,7 @@ impl<EventFunction> EventHandler<EventFunction> {
             Ok(result) => Ok(result),
             Err(error) => {
                 let json_error = serde_json::to_string(&error).unwrap();
-                // println!("{:?}", error);
+
                 println!("error encountered - {:?}", json_error);
                 Err(())
             }

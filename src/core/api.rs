@@ -1,13 +1,15 @@
-use hyper::body::Body;
-use hyper::body::Bytes;
+// use hyper::body::Body;
+// use hyper::body::Bytes;
+use hyper::body::{Body, Bytes};
 use hyper::client::connect::HttpConnector;
 use hyper::client::Client;
 use hyper::header::HeaderValue;
 use hyper::http::uri::Scheme;
-use hyper::HeaderMap;
-use hyper::Request;
-use hyper::Response;
-use hyper::Uri;
+// use hyper::HeaderMap;
+// use hyper::Request;
+// use hyper::Response;
+// use hyper::Uri;
+use hyper::{HeaderMap, Request, Response, Uri};
 use std::ffi::OsString;
 use tracing::{error, info, instrument};
 
