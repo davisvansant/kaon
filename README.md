@@ -1,3 +1,3 @@
-:collision: ~ kaon
+kaon ---> :collision:
 
 > A custom `AWS Lambda` runtime
