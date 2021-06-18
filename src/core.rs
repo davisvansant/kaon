@@ -245,7 +245,7 @@ mod tests {
         }
 
         let mut kaon = Kaon::charge().await;
-        assert_eq!(kaon.in_flight, false);
+        assert!(!kaon.in_flight);
 
         kaon.decay(test_handler_function).await;
         mock.assert();
@@ -253,6 +253,6 @@ mod tests {
         mock_post.assert();
         assert!(mock_post.matched());
         kaon.stop();
-        assert_eq!(kaon.in_flight, false);
+        assert!(!kaon.in_flight);
     }
 }

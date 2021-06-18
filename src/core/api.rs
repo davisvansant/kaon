@@ -188,7 +188,7 @@ mod tests {
         let test_body_bytes = Api::body_to_bytes(test_body).await;
         let test_bytes = Bytes::from_static(b"test");
         assert_eq!(test_body_bytes.len(), 4);
-        assert_eq!(test_body_bytes.contains(test_bytes.first().unwrap()), true);
+        assert!(test_body_bytes.contains(test_bytes.first().unwrap()));
     }
 
     #[tokio::test]
@@ -227,9 +227,9 @@ mod tests {
         );
         assert_eq!(test_headers.len(), 1);
         let test_environment_variable = OsString::from("_X_AMZN_TRACE_ID");
-        assert_eq!(std::env::var_os(&test_environment_variable).is_none(), true);
+        assert!(std::env::var_os(&test_environment_variable).is_none());
         Api::set_tracing_header(&test_headers).await;
-        assert_eq!(std::env::var_os(&test_environment_variable).is_some(), true);
+        assert!(std::env::var_os(&test_environment_variable).is_some());
         assert_eq!(
             std::env::var_os(test_environment_variable),
             Some(OsString::from(
