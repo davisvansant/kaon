@@ -79,10 +79,10 @@ impl Kaon {
             if let Ok(event_response) = event {
                 let headers = event_response.headers();
                 Api::set_tracing_header(headers).await;
-                let id = Api::get_header(&headers, "Lambda-Runtime-Aws-Request-Id").await;
-                let arn = Api::get_header(&headers, "Lambda-Runtime-Invoked-Function-Arn").await;
-                let identity = Api::get_header(&headers, "Lambda-Runtime-Cognito-Identity").await;
-                let client = Api::get_header(&headers, "Lambda-Runtime-Client-Context").await;
+                let id = Api::get_header(headers, "Lambda-Runtime-Aws-Request-Id").await;
+                let arn = Api::get_header(headers, "Lambda-Runtime-Invoked-Function-Arn").await;
+                let identity = Api::get_header(headers, "Lambda-Runtime-Cognito-Identity").await;
+                let client = Api::get_header(headers, "Lambda-Runtime-Client-Context").await;
                 let context = Context::create(id, arn, identity, client).await;
                 self.collect_event(context.clone()).await;
 

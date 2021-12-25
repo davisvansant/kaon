@@ -148,7 +148,7 @@ impl Api {
         error: Body,
     ) -> Result<(), hyper::http::Error> {
         let path = "/runtime/init/error";
-        let uri = Self::build_uri(&self.runtime_api, &path).await;
+        let uri = Self::build_uri(&self.runtime_api, path).await;
         let request = Request::builder()
             .method("POST")
             .header("Lambda-Runtime-Function-Error-Type", "Unhandled")
