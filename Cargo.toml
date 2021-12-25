@@ -7,22 +7,22 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies.hyper]
-version = "0.14.9"
+version = "0.14.16"
 default_features = false
 features = [ "client", "http1", "tcp" ]
 
 [dependencies.serde]
-version = "1.0.126"
+version = "1.0.132"
 default_features = false
 features = [ "derive" ]
 
 [dependencies.serde_json]
-version = "1.0.64"
+version = "1.0.73"
 default_features = false
 features = []
 
 [dependencies.tracing]
-version = "0.1.26"
+version = "0.1.29"
 default_features = false
 features = [ "std", "attributes" ]
 
@@ -37,11 +37,11 @@ default_features = false
 features = []
 
 [dev-dependencies.tokio]
-version = "1.2.0"
+version = "1.15.0"
 default_features = false
 features = [ "rt", "macros", "test-util" ]
 
 [dev-dependencies.tracing-subscriber]
-version = "0.2.15"
+version = "0.3.4"
 default_features = false
 features = [ "default" ]
