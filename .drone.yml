@@ -6,7 +6,7 @@ steps:
   - name: test
     image: rust:1.57.0
     environment:
-      RUST_BACKTRACE: 1
+      RUST_BACKTRACE: full
     commands:
       - rustup component add rustfmt clippy
       - rustc --version
@@ -15,4 +15,4 @@ steps:
       - cargo fmt -- --check
       - cargo clippy --all-targets --all-features
       - cargo check --workspace
-      - cargo test --workspace
+      - cargo test --workspace -- --test-threads=1
