@@ -240,11 +240,14 @@ mod tests {
 
     #[tokio::test]
     async fn runtime_next_invocation() -> Result<(), hyper::Error> {
+        let mut test_server = mockito::Server::new();
+        let test_runtime_api = test_server.host_with_port();
         let test_api = Api {
             client: Client::new(),
-            runtime_api: mockito::server_address().to_string(),
+            runtime_api: test_runtime_api,
         };
-        let mock = mockito::mock("GET", "/2018-06-01/runtime/invocation/next")
+        let mock = test_server
+            .mock("GET", "/2018-06-01/runtime/invocation/next")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_header(
@@ -337,18 +340,21 @@ mod tests {
 
     #[tokio::test]
     async fn runtime_invocation_response() -> Result<(), hyper::http::Error> {
+        let mut test_server = mockito::Server::new();
+        let test_runtime_api = test_server.host_with_port();
         let test_api = Api {
             client: Client::new(),
-            runtime_api: mockito::server_address().to_string(),
+            runtime_api: test_runtime_api,
         };
         let test_request_id = String::from("156cb537-e2d4-11e8-9b34-d36013741fb9");
         let test_body = Body::from("SUCCESS");
-        let mock = mockito::mock(
-            "POST",
-            "/2018-06-01/runtime/invocation/156cb537-e2d4-11e8-9b34-d36013741fb9/response",
-        )
-        .match_body("SUCCESS")
-        .create();
+        let mock = test_server
+            .mock(
+                "POST",
+                "/2018-06-01/runtime/invocation/156cb537-e2d4-11e8-9b34-d36013741fb9/response",
+            )
+            .match_body("SUCCESS")
+            .create();
         Api::runtime_invocation_response(&test_api, &test_request_id, test_body).await?;
         mock.assert();
         assert!(mock.matched());
@@ -357,15 +363,17 @@ mod tests {
 
     #[tokio::test]
     async fn runtime_invocation_error() {
+        let mut test_server = mockito::Server::new();
+        let test_runtime_api = test_server.host_with_port();
         let test_api = Api {
             client: Client::new(),
-            runtime_api: mockito::server_address().to_string(),
+            runtime_api: test_runtime_api,
         };
         let test_request_id = String::from("156cb537-e2d4-11e8-9b34-d36013741fb9");
         let test_error = Body::from(
             r#"{"errorMessage": "test_kaon_error_message", "errorType": "test_kaon_error_type"}"#,
         );
-        let mock = mockito::mock(
+        let mock = test_server.mock(
             "POST",
             "/2018-06-01/runtime/invocation/156cb537-e2d4-11e8-9b34-d36013741fb9/error",
         )
@@ -380,14 +388,17 @@ mod tests {
 
     #[tokio::test]
     async fn runtime_initialization_error() -> Result<(), hyper::http::Error> {
+        let mut test_server = mockito::Server::new();
+        let test_runtime_api = test_server.host_with_port();
         let test_api = Api {
             client: Client::new(),
-            runtime_api: mockito::server_address().to_string(),
+            runtime_api: test_runtime_api,
         };
         let test_error = Body::from(
             r#"{"errorMessage": "test_kaon_error_message", "errorType": "test_kaon_error_type"}"#,
         );
-        let mock = mockito::mock("POST", "/2018-06-01/runtime/init/error")
+        let mock = test_server
+            .mock("POST", "/2018-06-01/runtime/init/error")
             .match_body(r#"{"errorMessage": "test_kaon_error_message", "errorType": "test_kaon_error_type"}"#)
             .create();
         Api::runtime_initialization_error(&test_api, test_error).await?;

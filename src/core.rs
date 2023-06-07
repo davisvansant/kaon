@@ -166,10 +166,12 @@ mod tests {
 
     #[tokio::test]
     async fn decay() {
-        let test_aws_lambda_runtime_api = mockito::server_address().to_string();
+        let mut test_server = mockito::Server::new();
+        let test_aws_lambda_runtime_api = test_server.host_with_port();
         std::env::set_var("AWS_LAMBDA_RUNTIME_API", test_aws_lambda_runtime_api);
 
-        let mock = mockito::mock("GET", "/2018-06-01/runtime/invocation/next")
+        let mock = test_server
+            .mock("GET", "/2018-06-01/runtime/invocation/next")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_header(
@@ -196,13 +198,14 @@ mod tests {
             .with_body(r#"{"test_request": "hello"}"#)
             .expect(2)
             .create();
-        let mock_post = mockito::mock(
-            "POST",
-            "/2018-06-01/runtime/invocation/8476a536-e9f4-11e8-9739-2dfe598c3fcd/response",
-        )
-        .match_body(r#"{"test_response":"hello"}"#)
-        .expect(1)
-        .create();
+        let mock_post = test_server
+            .mock(
+                "POST",
+                "/2018-06-01/runtime/invocation/8476a536-e9f4-11e8-9739-2dfe598c3fcd/response",
+            )
+            .match_body(r#"{"test_response":"hello"}"#)
+            .expect(1)
+            .create();
 
         #[derive(Deserialize)]
         struct TestRequest {
