@@ -7,22 +7,22 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies.hyper]
-version = "0.14.16"
+version = "0.14.26"
 default_features = false
 features = [ "client", "http1", "tcp" ]
 
 [dependencies.serde]
-version = "1.0.132"
+version = "1.0.163"
 default_features = false
 features = [ "derive" ]
 
 [dependencies.serde_json]
-version = "1.0.73"
+version = "1.0.96"
 default_features = false
 features = [ "std" ]
 
 [dependencies.tracing]
-version = "0.1.29"
+version = "0.1.37"
 default_features = false
 features = [ "std", "attributes" ]
 
@@ -32,16 +32,16 @@ default_features = false
 features = [ "std-future", "std" ]
 
 [dev-dependencies.mockito]
-version = "0.30.0"
+version = "1.0.2"
 default_features = false
 features = []
 
 [dev-dependencies.tokio]
-version = "1.15.0"
+version = "1.28.2"
 default_features = false
 features = [ "rt", "macros", "test-util" ]
 
 [dev-dependencies.tracing-subscriber]
-version = "0.3.4"
+version = "0.3.17"
 default_features = false
 features = [ "default" ]
